@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de ventas · SC Ads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Martian+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PALETA — tablero de esmalte con fichas de papel
+   ============================================================ */
+:root{
+  --tinta:      #0B2124;
+  --tinta-2:    #0F2E30;
+  --tinta-3:    #17403F;
+  --crema:      #F2E9D8;
+  --crema-2:    #CDBFA6;
+  --laton:      #C99B2E;
+  --senal:      #D8402F;
+  --humo:       rgba(242,233,216,.45);
+  --linea:      rgba(201,155,46,.35);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html{
+  font-size:clamp(9px, 0.83vw, 24px);
+  background:var(--tinta);
+}
+
+body{
+  min-height:100vh;
+  background:
+    repeating-linear-gradient(180deg, rgba(255,255,255,.014) 0 2px, transparent 2px 5px),
+    radial-gradient(120% 90% at 50% 0%, var(--tinta-2) 0%, var(--tinta) 65%);
+  color:var(--crema);
+  font-family:'Archivo', system-ui, sans-serif;
+  font-variation-settings:'wdth' 100;
+  overflow:hidden;
+}
+
+/* ============================================================
+   ARRANQUE — un clic para que el navegador permita el sonido
+   ============================================================ */
+#arranque{
+  position:fixed; inset:0; z-index:90;
+  display:grid; place-content:center; gap:1.6rem; justify-items:center;
+  background:var(--tinta); text-align:center; padding:2rem;
+}
+#arranque .marca{
+  font-size:.85rem; letter-spacing:.42em; color:var(--laton);
+  font-family:'Martian Mono', monospace;
+}
+#arranque h1{
+  font-size:clamp(2rem, 7vw, 5rem); line-height:.92;
+  font-weight:900; font-variation-settings:'wdth' 118; text-transform:uppercase;
+}
+#arranque p{max-width:34rem; color:var(--humo); font-size:1.05rem; line-height:1.5}
+#encender{
+  margin-top:.5rem; padding:1.1rem 2.6rem; border:0; cursor:pointer;
+  background:var(--laton); color:var(--tinta);
+  font-family:'Martian Mono', monospace; font-weight:700;
+  font-size:1rem; letter-spacing:.16em; text-transform:uppercase;
+  transition:transform .15s ease, background .15s ease;
+}
+#encender:hover{transform:translateY(-2px); background:var(--crema)}
+#encender:focus-visible{outline:3px solid var(--crema); outline-offset:4px}
+body.encendido #arranque{display:none}
+
+/* ============================================================
+   ESTRUCTURA
+   ============================================================ */
+#tablero{
+  height:100vh; display:grid;
+  grid-template-rows:auto 1fr;
+  padding:2.2rem 2.6rem 1.6rem;
+  gap:1.6rem;
+}
+
+header{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:2rem; padding-bottom:1rem; border-bottom:1px solid var(--linea);
+}
+.marca-bloque{display:flex; align-items:baseline; gap:1.1rem}
+.marca-bloque strong{
+  font-size:1.6rem; font-weight:900; font-variation-settings:'wdth' 120;
+  letter-spacing:.02em; text-transform:uppercase;
+}
+.marca-bloque span{
+  font-family:'Martian Mono', monospace; font-size:.72rem;
+  letter-spacing:.3em; color:var(--laton); text-transform:uppercase;
+}
+.reloj{
+  display:flex; align-items:center; gap:1.4rem;
+  font-family:'Martian Mono', monospace; font-size:.85rem; color:var(--humo);
+}
+.reloj b{color:var(--crema); font-weight:400}
+#pulso{
+  width:.55rem; height:.55rem; border-radius:50%;
+  background:var(--laton); box-shadow:0 0 0 0 rgba(201,155,46,.6);
+  animation:latido 2.4s ease-out infinite;
+}
+#pulso.frio{background:var(--senal); animation:none}
+@keyframes latido{
+  0%{box-shadow:0 0 0 0 rgba(201,155,46,.55)}
+  70%{box-shadow:0 0 0 .8rem rgba(201,155,46,0)}
+  100%{box-shadow:0 0 0 0 rgba(201,155,46,0)}
+}
+
+.cuerpo{
+  display:grid; grid-template-columns:1.55fr .95fr; gap:2.6rem;
+  min-height:0;
+}
+
+.rotulo{
+  font-family:'Martian Mono', monospace; font-size:.68rem;
+  letter-spacing:.3em; text-transform:uppercase; color:var(--laton);
+  margin-bottom:1.1rem;
+}
+
+/* ============================================================
+   MARCADOR
+   ============================================================ */
+#marcador{position:relative; display:flex; flex-direction:column; gap:.7rem}
+
+.fila{
+  display:grid; grid-template-columns:2.6rem 1fr 5.5rem;
+  align-items:center; gap:1.4rem;
+  padding:.85rem 1.2rem .85rem .9rem;
+  background:linear-gradient(90deg, rgba(23,64,63,.55), rgba(15,46,48,.15));
+  border-left:3px solid transparent;
+  will-change:transform;
+}
+.fila.lider{
+  border-left-color:var(--laton);
+  background:linear-gradient(90deg, rgba(201,155,46,.16), rgba(15,46,48,.1));
+}
+.fila .puesto{
+  font-family:'Martian Mono', monospace; font-size:1.15rem;
+  color:var(--laton); text-align:center;
+}
+.fila.lider .puesto{color:var(--crema)}
+
+.nombre-barra{display:flex; flex-direction:column; gap:.55rem; min-width:0}
+.fila .nombre{
+  font-size:1.75rem; font-weight:800; font-variation-settings:'wdth' 112;
+  text-transform:uppercase; letter-spacing:.01em; line-height:1;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.barra{height:.6rem; background:rgba(242,233,216,.09); position:relative}
+.barra i{
+  display:block; height:100%; width:0; background:var(--laton);
+  transition:width .9s cubic-bezier(.2,.8,.2,1);
+  -webkit-mask-image:repeating-linear-gradient(90deg, #000 0 calc(1rem - 2px), transparent calc(1rem - 2px) 1rem);
+  mask-image:repeating-linear-gradient(90deg, #000 0 calc(1rem - 2px), transparent calc(1rem - 2px) 1rem);
+}
+.fila.lider .barra i{background:var(--crema)}
+.fila .cierres{
+  font-family:'Martian Mono', monospace; font-size:.7rem;
+  color:var(--humo); letter-spacing:.12em; text-transform:uppercase;
+}
+.fila .monto{justify-self:end}
+
+#vacio{
+  color:var(--humo); font-size:1.1rem; line-height:1.6; padding:2rem 0;
+  max-width:26rem;
+}
+
+/* ============================================================
+   COLUMNA DERECHA
+   ============================================================ */
+.panel{display:flex; flex-direction:column; min-height:0}
+.total{margin-bottom:2.4rem}
+.total .cifra{font-size:3.1rem}
+.meta{margin-top:1.1rem}
+.meta .pista{height:.75rem; background:rgba(242,233,216,.09); position:relative}
+.meta .pista i{
+  display:block; height:100%; width:0; background:var(--laton);
+  transition:width 1.1s cubic-bezier(.2,.8,.2,1);
+  -webkit-mask-image:repeating-linear-gradient(90deg, #000 0 calc(1.4rem - 2px), transparent calc(1.4rem - 2px) 1.4rem);
+  mask-image:repeating-linear-gradient(90deg, #000 0 calc(1.4rem - 2px), transparent calc(1.4rem - 2px) 1.4rem);
+}
+.meta .pie{
+  display:flex; justify-content:space-between; margin-top:.6rem;
+  font-family:'Martian Mono', monospace; font-size:.72rem; color:var(--humo);
+}
+.meta .pie b{color:var(--laton); font-weight:400}
+
+#ultimas{
+  display:flex; flex-direction:column; gap:.1rem;
+  overflow:hidden; min-height:0;
+}
+#ultimas li{
+  display:grid; grid-template-columns:3.6rem 1fr auto;
+  gap:1rem; align-items:baseline;
+  padding:.72rem 0; border-bottom:1px solid rgba(242,233,216,.08);
+  font-size:1rem;
+}
+#ultimas li:first-child{animation:entra .5s ease both}
+@keyframes entra{from{opacity:0; transform:translateY(-.7rem)} to{opacity:1; transform:none}}
+#ultimas .hora{font-family:'Martian Mono', monospace; font-size:.72rem; color:var(--laton)}
+#ultimas .quien{
+  font-weight:700; text-transform:uppercase; font-variation-settings:'wdth' 108;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#ultimas .cuanto{font-family:'Martian Mono', monospace; font-size:.85rem}
+
+/* ============================================================
+   FICHAS QUE GIRAN — la firma del tablero
+   ============================================================ */
+.flap{display:inline-flex; gap:.08em; font-family:'Martian Mono', monospace; font-weight:700}
+.flap .ficha{
+  position:relative; display:inline-block;
+  perspective:200px; line-height:1.12;
+}
+.flap .ficha.simbolo{opacity:.65}
+.flap .cara{display:block}
+.flap .cara.vieja{
+  position:absolute; inset:0;
+  transform-origin:50% 0%; backface-visibility:hidden;
+  background:var(--tinta-2);
+}
+.flap .ficha.girando .cara.vieja{animation:cae .34s cubic-bezier(.5,.05,.7,.4) forwards}
+.flap .ficha.girando .cara.nueva{animation:sube .34s cubic-bezier(.3,.7,.5,1) .1s both}
+@keyframes cae{from{transform:rotateX(0)} to{transform:rotateX(-92deg); opacity:.15}}
+@keyframes sube{from{transform:rotateX(88deg); opacity:.15} to{transform:rotateX(0); opacity:1}}
+
+/* ============================================================
+   CELEBRACIÓN
+   ============================================================ */
+#fiesta{
+  position:fixed; inset:0; z-index:70; display:none;
+  background:var(--senal); color:var(--crema);
+  place-content:center; justify-items:center; text-align:center;
+  padding:4vh 6vw; gap:1.2rem;
+}
+#fiesta.viva{display:grid; animation:golpe .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes golpe{from{opacity:0; transform:scale(1.06)} to{opacity:1; transform:none}}
+#fiesta::after{
+  content:''; position:absolute; inset:2.2vh 2.2vw;
+  border:1px solid rgba(242,233,216,.35); pointer-events:none;
+}
+#fiesta .grito{
+  font-family:'Martian Mono', monospace; font-size:1rem;
+  letter-spacing:.55em; text-transform:uppercase; opacity:.8;
+}
+#fiesta .quien{
+  font-size:clamp(3rem, 11vw, 9rem); line-height:.86;
+  font-weight:900; font-variation-settings:'wdth' 122; text-transform:uppercase;
+}
+#fiesta .cuanto{font-size:clamp(1.6rem, 4.4vw, 3.4rem); margin-top:.4rem}
+#fiesta .detalle{
+  font-family:'Martian Mono', monospace; font-size:.85rem;
+  letter-spacing:.22em; text-transform:uppercase; opacity:.75;
+}
+#papelitos{position:fixed; inset:0; z-index:71; pointer-events:none; overflow:hidden}
+.papelito{position:absolute; top:-4vh; width:.9rem; height:1.35rem; will-change:transform}
+
+/* ============================================================
+   PIE
+   ============================================================ */
+footer{
+  position:fixed; right:2.6rem; bottom:1rem;
+  font-family:'Martian Mono', monospace; font-size:.6rem;
+  letter-spacing:.2em; color:rgba(242,233,216,.22); text-transform:uppercase;
+}
+
+/* ============================================================
+   PANTALLAS CHICAS (para revisar desde el celular)
+   ============================================================ */
+@media (max-width:900px){
+  html{font-size:14px}
+  body{overflow:auto}
+  #tablero{height:auto; min-height:100vh; padding:1.4rem}
+  .cuerpo{grid-template-columns:1fr; gap:2.2rem}
+  .fila{grid-template-columns:2rem 1fr; row-gap:.6rem}
+  .fila .monto{grid-column:2; justify-self:start}
+  footer{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms !important; transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<!-- ARRANQUE -->
+<div id="arranque">
+  <div class="marca">SC ADS</div>
+  <h1>Tablero<br>de ventas</h1>
+  <p>Un clic para encender. El navegador solo deja sonar la campana después de que alguien toque la pantalla, así que este botón se presiona una vez al abrir la oficina.</p>
+  <button id="encender">Encender el tablero</button>
+</div>
+
+<!-- TABLERO -->
+<div id="tablero" aria-live="polite">
+  <header>
+    <div class="marca-bloque">
+      <strong id="titulo">SC Ads</strong>
+      <span id="subtitulo">Ventas del día</span>
+    </div>
+    <div class="reloj">
+      <span id="fecha"></span>
+      <b id="hora">--:--</b>
+      <span id="pulso" title="Conexión"></span>
+    </div>
+  </header>
+
+  <div class="cuerpo">
+    <section>
+      <div class="rotulo">Equipo · hoy</div>
+      <div id="marcador"></div>
+      <div id="vacio">Todavía no hay ventas registradas hoy. La primera que entre aparece aquí y suena la campana.</div>
+    </section>
+
+    <aside class="panel">
+      <div class="total">
+        <div class="rotulo">Vendido hoy</div>
+        <div class="flap cifra" id="totalDia"></div>
+        <div class="meta">
+          <div class="pista"><i id="metaBarra"></i></div>
+          <div class="pie">
+            <span>Meta <b id="metaTexto">—</b></span>
+            <span><b id="metaPct">0%</b></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rotulo">Últimas ventas</div>
+      <ul id="ultimas"></ul>
+    </aside>
+  </div>
+</div>
+
+<!-- CELEBRACIÓN -->
+<div id="fiesta" role="status">
+  <div class="grito">Venta cerrada</div>
+  <div class="quien" id="fiestaQuien">—</div>
+  <div class="flap cuanto" id="fiestaCuanto"></div>
+  <div class="detalle" id="fiestaDetalle"></div>
+</div>
+<div id="papelitos"></div>
+
+<footer>T · venta de prueba &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
+
+<script>
+/* ================================================================
+   CONFIGURACIÓN — lo único que se toca aquí
+   ================================================================ */
+const CONFIG = {
+  modo: 'demo',                 // 'demo' mientras pruebas · 'api' cuando conectes la hoja
+  urlDatos: '',                 // URL /exec del Apps Script (ver instrucciones al final)
+  intervaloMs: 8000,            // cada cuánto pregunta por ventas nuevas
+  metaDia: 20000000,            // meta del día en COP (0 = sin meta)
+  filtrarHoy: true,             // ignorar ventas de días anteriores
+  sonidoURL: '',                // mp3 propio; vacío = campana sintetizada
+  duracionFiestaMs: 6500,
+  titulo: 'SC Ads',
+  subtitulo: 'Ventas del día'
+};
+
+/* ================================================================
+   UTILIDADES
+   ================================================================ */
+const pesos = new Intl.NumberFormat('es-CO', {
+  style: 'currency', currency: 'COP', maximumFractionDigits: 0
+});
+const $ = (s) => document.querySelector(s);
+const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function mismoDia(iso){
+  const d = new Date(iso), h = new Date();
+  return d.getFullYear() === h.getFullYear() && d.getMonth() === h.getMonth() && d.getDate() === h.getDate();
+}
+function hhmm(iso){
+  const d = new Date(iso);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+/* ================================================================
+   FICHAS QUE GIRAN
+   ================================================================ */
+function pintarFlap(cont, texto){
+  const chars = String(texto).split('');
+  while (cont.children.length > chars.length) cont.lastChild.remove();
+  while (cont.children.length < chars.length){
+    const f = document.createElement('span');
+    f.className = 'ficha';
+    f.innerHTML = '<span class="cara nueva"></span>';
+    cont.appendChild(f);
+  }
+  chars.forEach((c, i) => {
+    const ficha = cont.children[i];
+    const nueva = ficha.querySelector('.cara.nueva');
+    const antes = nueva.textContent;
+    ficha.classList.toggle('simbolo', !/[0-9]/.test(c));
+    if (antes === c) return;
+    if (antes === '' || menosMovimiento){ nueva.textContent = c; return; }
+    const vieja = document.createElement('span');
+    vieja.className = 'cara vieja';
+    vieja.textContent = antes;
+    ficha.appendChild(vieja);
+    nueva.textContent = c;
+    ficha.classList.remove('girando');
+    void ficha.offsetWidth;
+    ficha.classList.add('girando');
+    setTimeout(() => { vieja.remove(); ficha.classList.remove('girando'); }, 480);
+  });
+}
+
+/* ================================================================
+   SONIDO — campana sintetizada, sin archivos externos
+   ================================================================ */
+let audio = null, silencio = false, pistaPropia = null;
+
+function abrirAudio(){
+  if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+  if (audio.state === 'suspended') audio.resume();
+  if (CONFIG.sonidoURL && !pistaPropia){
+    pistaPropia = new Audio(CONFIG.sonidoURL);
+    pistaPropia.preload = 'auto';
+  }
+}
+
+function campana(){
+  if (silencio) return;
+  if (pistaPropia){ pistaPropia.currentTime = 0; pistaPropia.play().catch(()=>{}); return; }
+  if (!audio) return;
+  const t = audio.currentTime;
+  const maestro = audio.createGain();
+  maestro.gain.value = 0.28;
+  maestro.connect(audio.destination);
+  // parciales inarmónicos: suena a campana, no a pitido
+  [1, 2.02, 2.68, 4.07, 5.41].forEach((mult, i) => {
+    const osc = audio.createOscillator();
+    const g = audio.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 392 * mult;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.9 / (i + 1.4), t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + 2.6 - i * 0.28);
+    osc.connect(g); g.connect(maestro);
+    osc.start(t); osc.stop(t + 2.8);
+  });
+}
+
+/* ================================================================
+   PAPELITOS
+   ================================================================ */
+function papelitos(){
+  if (menosMovimiento) return;
+  const caja = $('#papelitos');
+  const tonos = ['#F2E9D8', '#C99B2E', '#0B2124', '#CDBFA6'];
+  for (let i = 0; i < 70; i++){
+    const p = document.createElement('div');
+    p.className = 'papelito';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = tonos[i % tonos.length];
+    caja.appendChild(p);
+    const giro = (Math.random() * 900 - 450);
+    const deriva = (Math.random() * 26 - 13);
+    p.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${deriva}vw, 108vh) rotate(${giro}deg)`, opacity: .85 }
+    ], { duration: 2600 + Math.random() * 1800, delay: Math.random() * 600, easing: 'cubic-bezier(.3,.5,.6,1)' })
+     .onfinish = () => p.remove();
+  }
+}
+
+/* ================================================================
+   ESTADO
+   ================================================================ */
+const estado = { ventas: [], ids: new Set(), cola: [], celebrando: false, arrancado: false };
+
+function ventasDeHoy(){
+  return CONFIG.filtrarHoy ? estado.ventas.filter(v => mismoDia(v.ts)) : estado.ventas;
+}
+
+function recibir(lote, primeraCarga){
+  const nuevas = [];
+  lote.forEach(v => {
+    if (!v || !v.id || estado.ids.has(v.id)) return;
+    estado.ids.add(v.id);
+    const venta = {
+      id: String(v.id),
+      vendedora: String(v.vendedora || 'Sin asignar').trim(),
+      monto: Number(v.monto) || 0,
+      ts: v.ts || new Date().toISOString(),
+      producto: v.producto ? String(v.producto) : ''
+    };
+    estado.ventas.push(venta);
+    nuevas.push(venta);
+  });
+  estado.ventas.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+  if (primeraCarga){ dibujar(); return; }   // al abrir no se celebra el histórico
+  nuevas.filter(v => !CONFIG.filtrarHoy || mismoDia(v.ts))
+        .sort((a, b) => new Date(a.ts) - new Date(b.ts))
+        .forEach(v => estado.cola.push(v));
+  if (nuevas.length) siguienteFiesta(); else dibujar();
+}
+
+function siguienteFiesta(){
+  if (estado.celebrando) return;
+  const v = estado.cola.shift();
+  if (!v){ dibujar(); return; }
+  estado.celebrando = true;
+  $('#fiestaQuien').textContent = v.vendedora;
+  pintarFlap($('#fiestaCuanto'), pesos.format(v.monto));
+  $('#fiestaDetalle').textContent = [v.producto, hhmm(v.ts)].filter(Boolean).join(' · ');
+  $('#fiesta').classList.add('viva');
+  campana();
+  papelitos();
+  setTimeout(() => {
+    $('#fiesta').classList.remove('viva');
+    estado.celebrando = false;
+    dibujar();
+    setTimeout(siguienteFiesta, 400);
+  }, CONFIG.duracionFiestaMs);
+}
+
+/* ================================================================
+   DIBUJAR
+   ================================================================ */
+function dibujar(){
+  const hoy = ventasDeHoy();
+
+  // ranking
+  const mapa = new Map();
+  hoy.forEach(v => {
+    const r = mapa.get(v.vendedora) || { vendedora: v.vendedora, monto: 0, cierres: 0 };
+    r.monto += v.monto; r.cierres++;
+    mapa.set(v.vendedora, r);
+  });
+  const orden = [...mapa.values()].sort((a, b) => b.monto - a.monto);
+  const tope = orden.length ? orden[0].monto : 1;
+
+  $('#vacio').style.display = orden.length ? 'none' : 'block';
+
+  const cont = $('#marcador');
+  const antes = new Map();
+  [...cont.children].forEach(el => antes.set(el.dataset.quien, el.getBoundingClientRect().top));
+
+  const vistos = new Set();
+  orden.forEach((r, i) => {
+    let fila = cont.querySelector(`[data-quien="${CSS.escape(r.vendedora)}"]`);
+    if (!fila){
+      fila = document.createElement('div');
+      fila.className = 'fila';
+      fila.dataset.quien = r.vendedora;
+      fila.innerHTML = `
+        <div class="puesto"></div>
+        <div class="nombre-barra">
+          <div class="nombre"></div>
+          <div class="barra"><i></i></div>
+          <div class="cierres"></div>
+        </div>
+        <div class="flap monto"></div>`;
+      cont.appendChild(fila);
+    }
+    vistos.add(r.vendedora);
+    fila.querySelector('.puesto').textContent = String(i + 1).padStart(2, '0');
+    fila.querySelector('.nombre').textContent = r.vendedora;
+    fila.querySelector('.barra i').style.width = Math.max(3, (r.monto / tope) * 100) + '%';
+    fila.querySelector('.cierres').textContent = r.cierres + (r.cierres === 1 ? ' cierre' : ' cierres');
+    pintarFlap(fila.querySelector('.monto'), pesos.format(r.monto));
+    fila.classList.toggle('lider', i === 0);
+    cont.appendChild(fila);
+  });
+  [...cont.children].forEach(el => { if (!vistos.has(el.dataset.quien)) el.remove(); });
+
+  // reacomodo con FLIP: las filas se deslizan a su nuevo puesto
+  if (!menosMovimiento){
+    [...cont.children].forEach(el => {
+      const y0 = antes.get(el.dataset.quien);
+      if (y0 == null) return;
+      const dy = y0 - el.getBoundingClientRect().top;
+      if (Math.abs(dy) < 1) return;
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }],
+                 { duration: 620, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    });
+  }
+
+  // total y meta
+  const total = hoy.reduce((s, v) => s + v.monto, 0);
+  pintarFlap($('#totalDia'), pesos.format(total));
+  if (CONFIG.metaDia > 0){
+    const pct = Math.min(100, (total / CONFIG.metaDia) * 100);
+    $('#metaBarra').style.width = pct + '%';
+    $('#metaTexto').textContent = pesos.format(CONFIG.metaDia);
+    $('#metaPct').textContent = Math.round(pct) + '%';
+  } else {
+    $('#metaTexto').textContent = 'sin meta';
+    $('#metaPct').textContent = '';
+  }
+
+  // últimas
+  const ul = $('#ultimas');
+  ul.innerHTML = '';
+  hoy.slice(0, 9).forEach(v => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="hora">${hhmm(v.ts)}</span>
+                    <span class="quien">${v.vendedora}</span>
+                    <span class="cuanto">${pesos.format(v.monto)}</span>`;
+    ul.appendChild(li);
+  });
+}
+
+/* ================================================================
+   DATOS
+   ================================================================ */
+async function traerDatos(primeraCarga){
+  if (CONFIG.modo === 'demo'){ marcarPulso(true); return; }
+  try{
+    const r = await fetch(CONFIG.urlDatos + (CONFIG.urlDatos.includes('?') ? '&' : '?') + 't=' + Date.now(), { redirect: 'follow' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (typeof data.meta === 'number') CONFIG.metaDia = data.meta;
+    recibir(data.ventas || [], primeraCarga);
+    marcarPulso(true);
+  } catch (e){
+    // Si el navegador bloquea por CORS, se intenta la vía JSONP del Apps Script
+    jsonp(primeraCarga);
+  }
+}
+
+function jsonp(primeraCarga){
+  const nombre = 'cb' + Date.now();
+  const limpiar = () => { delete window[nombre]; s.remove(); };
+  window[nombre] = (data) => {
+    if (typeof data.meta === 'number') CONFIG.metaDia = data.meta;
+    recibir(data.ventas || [], primeraCarga);
+    marcarPulso(true);
+    limpiar();
+  };
+  const s = document.createElement('script');
+  s.src = CONFIG.urlDatos + (CONFIG.urlDatos.includes('?') ? '&' : '?') + 'callback=' + nombre + '&t=' + Date.now();
+  s.onerror = () => { marcarPulso(false); limpiar(); };
+  document.body.appendChild(s);
+  setTimeout(() => { if (window[nombre]) { marcarPulso(false); limpiar(); } }, 12000);
+}
+
+function marcarPulso(ok){ $('#pulso').classList.toggle('frio', !ok); }
+
+/* ================================================================
+   MODO DEMO
+   ================================================================ */
+const DEMO_NOMBRES = ['Valentina', 'Camila', 'Manuela', 'Sara', 'Daniela'];
+const DEMO_PRODUCTOS = ['Plan mensual', 'Paquete premium', 'Sesión única', 'Plan trimestral'];
+let demoN = 0;
+
+function ventaDemo(){
+  demoN++;
+  return {
+    id: 'demo-' + demoN + '-' + Date.now(),
+    vendedora: DEMO_NOMBRES[Math.floor(Math.random() * DEMO_NOMBRES.length)],
+    monto: (Math.floor(Math.random() * 24) + 4) * 100000,
+    ts: new Date().toISOString(),
+    producto: DEMO_PRODUCTOS[Math.floor(Math.random() * DEMO_PRODUCTOS.length)]
+  };
+}
+function agendarDemo(){
+  setTimeout(() => { recibir([ventaDemo()], false); agendarDemo(); }, 11000 + Math.random() * 14000);
+}
+
+/* ================================================================
+   RELOJ Y TECLAS
+   ================================================================ */
+function reloj(){
+  const h = new Date();
+  $('#hora').textContent = h.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
+  $('#fecha').textContent = h.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+document.addEventListener('keydown', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 't') recibir([ventaDemo()], false);
+  if (k === 'm') silencio = !silencio;
+  if (k === 'f'){
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(()=>{});
+  }
+});
+
+/* ================================================================
+   ENCENDER
+   ================================================================ */
+$('#encender').addEventListener('click', () => {
+  document.body.classList.add('encendido');
+  abrirAudio();
+  document.documentElement.requestFullscreen?.().catch(()=>{});
+  $('#titulo').textContent = CONFIG.titulo;
+  $('#subtitulo').textContent = CONFIG.subtitulo;
+  reloj(); setInterval(reloj, 20000);
+  pintarFlap($('#totalDia'), pesos.format(0));
+  traerDatos(true);
+  if (CONFIG.modo === 'demo'){
+    recibir([
+      { id: 'seed-1', vendedora: 'Camila',   monto: 1450000, ts: new Date(Date.now() - 5400000).toISOString(), producto: 'Plan mensual' },
+      { id: 'seed-2', vendedora: 'Valentina',monto: 980000,  ts: new Date(Date.now() - 3600000).toISOString(), producto: 'Sesión única' },
+      { id: 'seed-3', vendedora: 'Camila',   monto: 720000,  ts: new Date(Date.now() - 1800000).toISOString(), producto: 'Paquete premium' }
+    ], true);
+    agendarDemo();
+  } else {
+    setInterval(() => traerDatos(false), CONFIG.intervaloMs);
+  }
+});
+</script>
+
+<!--
+================================================================================
+CÓMO CONECTARLO A GOOGLE SHEETS
+================================================================================
+
+1) Hoja llamada "Ventas" con estas columnas exactas en la fila 1:
+   id | vendedora | monto | fecha | producto
+
+   - id: cualquier texto único (una fórmula sirve: ="v"&ROW())
+   - monto: número, sin puntos ni símbolo de peso
+   - fecha: fecha y hora del cierre (Ctrl+Shift+; pone la hora actual)
+
+2) Extensiones → Apps Script, pega esto y guarda:
+
+function doGet(e){
+  var sh = SpreadsheetApp.getActive().getSheetByName('Ventas');
+  var datos = sh.getDataRange().getValues();
+  datos.shift();
+  var ventas = datos
+    .filter(function(f){ return f[0] !== '' && f[1] !== ''; })
+    .map(function(f){
+      return {
+        id: String(f[0]),
+        vendedora: String(f[1]),
+        monto: Number(f[2]) || 0,
+        ts: f[3] ? new Date(f[3]).toISOString() : new Date().toISOString(),
+        producto: f[4] ? String(f[4]) : ''
+      };
+    });
+  var carga = JSON.stringify({ meta: 20000000, ventas: ventas });
+  var cb = e && e.parameter && e.parameter.callback;
+  if (cb){
+    return ContentService.createTextOutput(cb + '(' + carga + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(carga)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+3) Implementar → Nueva implementación → Aplicación web
+   Ejecutar como: Yo
+   Quién tiene acceso: Cualquier usuario
+   Copia la URL que termina en /exec
+
+4) Arriba en CONFIG: modo:'api' y urlDatos:'la URL /exec'
+
+Nota: "Cualquier usuario" significa que quien tenga el link ve los montos.
+Si eso no aplica, monta el endpoint en tu propio backend con una llave.
+
+================================================================================
+SI LAS VENTAS VIENEN DE GO HIGH LEVEL
+================================================================================
+Workflow en GHL: trigger "Opportunity Status Changed → Won" → acción Webhook
+apuntando a la misma Apps Script (con doPost) para que escriba la fila en la
+hoja. El tablero sigue leyendo solo de la hoja, así que nada más cambia.
+-->
+</body>
+</html>

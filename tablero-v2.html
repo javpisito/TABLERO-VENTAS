@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de ventas · SC Ads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Martian+Mono:wght@400;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Paleta SC Ads. El azul es el de la marca; el rojo solo para avisos. */
+  --tinta:#0B1B33; --tinta-2:#33425C; --humo:#7A8AA3;
+  --papel:#F4F7FC; --tarjeta:#FFFFFF; --linea:#E3E9F3;
+  --azul:#2563EB; --azul-fuerte:#1D4ED8; --azul-suave:#EEF3FF;
+  --senal:#DC2626;
+  --sombra:0 1px 2px rgba(11,27,51,.04), 0 8px 24px rgba(11,27,51,.05);
+  --radio:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:clamp(9px,0.84vw,24px); background:var(--papel)}
+body{
+  min-height:100vh; color:var(--tinta); overflow:hidden; background:var(--papel);
+  font-family:'Archivo',system-ui,sans-serif; font-variation-settings:'wdth' 100;
+  -webkit-font-smoothing:antialiased;
+}
+
+#arranque{position:fixed;inset:0;z-index:90;display:grid;place-content:center;justify-items:center;
+  gap:1.5rem;background:var(--papel);text-align:center;padding:2rem}
+#arranque .marca{font-family:'Martian Mono',monospace;font-size:.8rem;letter-spacing:.42em;color:var(--azul)}
+#arranque h1{font-size:clamp(2rem,7vw,5rem);line-height:.92;font-weight:900;
+  font-variation-settings:'wdth' 118;text-transform:uppercase;color:var(--tinta)}
+#arranque p{max-width:34rem;color:var(--humo);font-size:1.05rem;line-height:1.5}
+#encender{margin-top:.4rem;padding:1.05rem 2.6rem;border:0;cursor:pointer;background:var(--azul);
+  color:#fff;font-family:'Martian Mono',monospace;font-weight:700;font-size:.95rem;
+  letter-spacing:.16em;text-transform:uppercase;border-radius:10px;
+  box-shadow:0 6px 18px rgba(37,99,235,.32);transition:transform .15s,background .15s}
+#encender:hover{transform:translateY(-2px);background:var(--azul-fuerte)}
+#encender:focus-visible{outline:3px solid var(--azul-fuerte);outline-offset:4px}
+body.encendido #arranque{display:none}
+
+/* ── Rejilla del tablero ─────────────────────────────────────────────── */
+header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
+  padding-bottom:.85rem;border-bottom:1px solid var(--linea)}
+.marca-bloque{display:flex;align-items:center;gap:1.1rem}
+
+/* El logo: SC en serif oscura, ADS en la sans azul, espaciada */
+.logo{display:flex;align-items:baseline;gap:.3em;line-height:1;white-space:nowrap}
+.logo .sc{font-family:'Playfair Display','Times New Roman',Georgia,serif;font-weight:600;
+  font-size:2.15rem;color:var(--tinta);letter-spacing:.005em}
+.logo .ads{font-family:'Archivo',system-ui,sans-serif;font-weight:500;font-size:1.15rem;
+  letter-spacing:.26em;color:var(--azul);text-transform:uppercase}
+#arranque .logo{justify-content:center}
+#arranque .logo .sc{font-size:4.6rem}
+#arranque .logo .ads{font-size:2.4rem}
+
+.marca-bloque span#mes{font-family:'Martian Mono',monospace;font-size:.66rem;
+  letter-spacing:.24em;color:var(--azul);text-transform:uppercase;
+  background:var(--azul-suave);padding:.4rem .8rem;border-radius:999px}
+.reloj{display:flex;align-items:center;gap:1.1rem;font-family:'Martian Mono',monospace;
+  font-size:.76rem;color:var(--humo);background:var(--tarjeta);border:1px solid var(--linea);
+  border-radius:999px;padding:.48rem 1.05rem}
+.reloj b{color:var(--tinta);font-weight:400}
+#pulso{width:.5rem;height:.5rem;border-radius:50%;background:var(--azul);
+  animation:latido 2.4s ease-out infinite}
+#pulso.frio{background:var(--senal);animation:none}
+@keyframes latido{0%{box-shadow:0 0 0 0 rgba(37,99,235,.5)}70%{box-shadow:0 0 0 .8rem rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+
+#avisos{display:none;padding:.65rem 1.05rem;background:#FEF2F2;border:1px solid #FECACA;
+  border-left:4px solid var(--senal);border-radius:10px;font-size:.82rem;color:#991B1B}
+#avisos.hay{display:block}
+
+#tablero{height:100vh;display:grid;
+  grid-template-rows:auto auto auto minmax(0,1fr) minmax(0,.46fr);
+  padding:1.4rem 1.7rem 1rem;gap:.95rem}
+
+.panel{background:var(--tarjeta);border:1px solid var(--linea);border-radius:var(--radio);
+  box-shadow:var(--sombra);padding:1rem 1.15rem;display:flex;flex-direction:column;min-height:0}
+.rotulo-col{display:flex;align-items:center;gap:.65rem;flex:none;
+  font-family:'Martian Mono',monospace;font-size:.62rem;letter-spacing:.26em;
+  text-transform:uppercase;color:var(--tinta-2);margin-bottom:.75rem}
+.rotulo-col::before{content:'';width:1.4rem;height:3px;border-radius:2px;background:var(--azul);flex:none}
+.rotulo-col em{margin-left:auto;font-style:normal;letter-spacing:.12em;color:var(--humo)}
+
+/* ── Fila de indicadores ─────────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.85rem}
+.kpi{padding:.95rem 1.1rem;background:var(--tarjeta);border:1px solid var(--linea);
+  border-radius:var(--radio);box-shadow:var(--sombra);display:flex;flex-direction:column}
+.kpi.fuerte{background:var(--azul);border-color:var(--azul);color:#fff;
+  box-shadow:0 10px 28px rgba(37,99,235,.28)}
+.kpi .rotulo{font-family:'Martian Mono',monospace;font-size:.58rem;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--humo);margin-bottom:.45rem}
+.kpi.fuerte .rotulo{color:rgba(255,255,255,.82)}
+.kpi .cifra{align-self:flex-start;font-size:2.05rem;color:var(--tinta);line-height:1.05;white-space:nowrap}
+.kpi.fuerte .cifra{color:#fff}
+.kpi .pie{margin-top:auto;padding-top:.5rem;font-family:'Martian Mono',monospace;
+  font-size:.58rem;color:var(--humo)}
+.kpi.fuerte .pie{color:rgba(255,255,255,.78)}
+.kpi .pie::before{content:'';display:block;width:1.5rem;height:3px;border-radius:2px;
+  background:var(--azul);margin-bottom:.5rem}
+.kpi.fuerte .pie::before{background:rgba(255,255,255,.6)}
+/* barrita dentro del indicador de meta */
+.kpi .mini{height:.3rem;background:#EDF1F8;border-radius:999px;overflow:hidden;margin-top:.55rem}
+.kpi .mini i{display:block;height:100%;width:0;background:var(--azul);border-radius:999px;
+  transition:width .9s cubic-bezier(.2,.8,.2,1)}
+
+/* ── Cuerpo: gráfica + vendedoras ────────────────────────────────────── */
+.cuerpo{display:grid;grid-template-columns:1.45fr 1fr;gap:.95rem;min-height:0}
+#grafico{flex:1;min-height:0;display:block}
+#grafico svg{width:100%;height:100%;display:block;overflow:visible}
+.leyenda{display:flex;gap:1.3rem;flex:none;margin-top:.5rem;
+  font-family:'Martian Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--humo)}
+.leyenda span{display:flex;align-items:center;gap:.4rem}
+.leyenda i{width:.85rem;height:.28rem;border-radius:999px;background:var(--azul);display:block}
+.leyenda .porvenir i{background:#BFD3FF}
+.leyenda .meta i{background:transparent;border-top:2px dashed var(--humo);height:0;width:1rem}
+
+#vendedoras{position:relative;flex:1;display:flex;flex-direction:column;gap:.5rem;
+  overflow:hidden;min-height:0}
+.fila{display:grid;grid-template-columns:2rem minmax(0,1fr) auto;align-items:center;gap:.9rem;
+  padding:.62rem .85rem;background:#F8FAFE;border:1px solid var(--linea);
+  border-radius:10px;will-change:transform}
+.fila.lider{background:var(--azul);border-color:var(--azul);color:#fff;
+  box-shadow:0 8px 20px rgba(37,99,235,.26)}
+.fila .puesto{font-family:'Martian Mono',monospace;font-size:.9rem;color:var(--azul);text-align:center}
+.fila.lider .puesto{color:rgba(255,255,255,.85)}
+.nb{display:flex;flex-direction:column;gap:.38rem;min-width:0}
+.fila .nombre{font-size:1.25rem;font-weight:800;font-variation-settings:'wdth' 112;
+  text-transform:uppercase;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barra{height:.34rem;background:#E3EAF6;border-radius:999px;overflow:hidden}
+.fila.lider .barra{background:rgba(255,255,255,.28)}
+.barra i{display:block;height:100%;width:0;background:var(--azul);border-radius:999px;
+  transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.fila.lider .barra i{background:#fff}
+.fila .cierres{font-family:'Martian Mono',monospace;font-size:.58rem;color:var(--humo);letter-spacing:.06em}
+.fila.lider .cierres{color:rgba(255,255,255,.82)}
+.fila .monto{justify-self:end;font-weight:700;font-size:.92rem;white-space:nowrap}
+
+#vacio{color:var(--humo);font-size:.95rem;line-height:1.6}
+
+/* ── Clientes: una tira de tarjetas ──────────────────────────────────── */
+#clientes{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:.85rem;flex:1;min-height:0}
+#clientes li{display:flex;flex-direction:column;gap:.35rem;padding:.85rem 1rem;
+  background:#F8FAFE;border:1px solid var(--linea);border-radius:10px;min-width:0}
+#clientes li.cumplido{background:var(--azul-suave);border-color:#C7D9FF}
+#clientes .nombre{font-size:1.02rem;font-weight:800;font-variation-settings:'wdth' 108;
+  text-transform:uppercase;color:var(--tinta-2);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;letter-spacing:.01em}
+#clientes .cifra{align-self:flex-start;font-family:'Martian Mono',monospace;font-size:1.75rem;
+  font-weight:700;color:var(--tinta);line-height:1.1;white-space:nowrap}
+#clientes .metabarra{height:.4rem;background:#E3EAF6;border-radius:999px;overflow:hidden;margin-top:.15rem}
+#clientes .metabarra i{display:block;height:100%;width:0;background:var(--azul);
+  border-radius:999px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+#clientes .metabarra.cumplida i{background:var(--azul-fuerte)}
+#clientes .detalle{display:flex;flex-wrap:wrap;gap:.2rem .85rem;margin-top:auto;
+  font-family:'Martian Mono',monospace;font-size:.6rem;color:var(--humo);letter-spacing:.04em}
+#clientes .detalle b{color:var(--tinta-2);font-weight:700}
+#clientes .detalle .cumplida b{color:var(--azul)}
+
+@media (max-width:1100px){
+  html{font-size:14px}
+  body{overflow:auto}
+  #tablero{height:auto;min-height:100vh;padding:1.1rem;grid-template-rows:none}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .cuerpo{grid-template-columns:1fr}
+  #grafico{height:16rem}
+  #clientes{grid-auto-flow:row;grid-auto-columns:auto}
+  header{flex-direction:column;align-items:flex-start;gap:.7rem}
+  footer{display:none}
+}
+
+.flap{display:inline-flex;flex-wrap:nowrap;white-space:nowrap;gap:.08em;
+  font-family:'Martian Mono',monospace;font-weight:700}
+.flap .ficha{position:relative;display:inline-block;perspective:200px;line-height:1.12}
+.flap .ficha.simbolo{opacity:.55}
+.flap .cara{display:block}
+/* La cara que cae tapa a la nueva, asi que su fondo tiene que ser el de la tarjeta */
+.flap .cara.vieja{position:absolute;inset:0;transform-origin:50% 0%;backface-visibility:hidden;
+  background:var(--tarjeta)}
+.kpi.fuerte .flap .cara.vieja,
+.fila.lider .flap .cara.vieja{background:var(--azul)}
+.flap .ficha.girando .cara.vieja{animation:cae .34s cubic-bezier(.5,.05,.7,.4) forwards}
+.flap .ficha.girando .cara.nueva{animation:sube .34s cubic-bezier(.3,.7,.5,1) .1s both}
+@keyframes cae{from{transform:rotateX(0)}to{transform:rotateX(-92deg);opacity:.15}}
+@keyframes sube{from{transform:rotateX(88deg);opacity:.15}to{transform:rotateX(0);opacity:1}}
+
+#fiesta{position:fixed;inset:0;z-index:70;display:none;background:var(--azul);color:#fff;
+  place-content:center;justify-items:center;text-align:center;padding:4vh 6vw;gap:1rem}
+#fiesta.viva{display:grid;animation:golpe .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes golpe{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:none}}
+#fiesta::after{content:'';position:absolute;inset:2.2vh 2.2vw;border:1px solid rgba(255,255,255,.3);
+  border-radius:18px;pointer-events:none}
+#fiesta .grito{font-family:'Martian Mono',monospace;font-size:.95rem;letter-spacing:.5em;
+  text-transform:uppercase;opacity:.85}
+#fiesta .quien{font-size:clamp(3rem,11vw,9rem);line-height:.86;font-weight:900;
+  font-variation-settings:'wdth' 122;text-transform:uppercase}
+#fiesta .cuanto{font-size:clamp(1.6rem,4.4vw,3.4rem);margin-top:.3rem}
+#fiesta .flap .cara.vieja{background:var(--azul)}
+#fiesta .detalle{font-family:'Martian Mono',monospace;font-size:.82rem;letter-spacing:.2em;
+  text-transform:uppercase;opacity:.8}
+/* La gráfica del mes */
+.reja{stroke:#EDF1F8;stroke-width:1}
+.ejeY{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
+.ejeX{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:middle}
+.areaFirme{fill:rgba(37,99,235,.16)}
+.areaPorVenir{fill:rgba(37,99,235,.05)}
+.lineaFirme{fill:none;stroke:#2563EB;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+.lineaPorVenir{fill:none;stroke:#93B4FF;stroke-width:4;stroke-dasharray:9 8;
+  stroke-linejoin:round;stroke-linecap:round}
+.lineaMeta{stroke:#7A8AA3;stroke-width:2;stroke-dasharray:7 6}
+.rotuloMeta{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
+.lineaHoy{stroke:#C7D9FF;stroke-width:2}
+.puntoHoy{fill:#2563EB;stroke:#fff;stroke-width:3}
+
+#papelitos{position:fixed;inset:0;z-index:71;pointer-events:none;overflow:hidden}
+.papelito{position:absolute;top:-4vh;width:.85rem;height:1.3rem;will-change:transform}
+
+footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monospace;
+  font-size:.58rem;letter-spacing:.2em;color:#B4C0D2;text-transform:uppercase}
+
+@media (max-width:900px){
+  html{font-size:14px}
+  body{overflow:auto}
+  #tablero{height:auto;min-height:100vh;padding:1.2rem}
+  .kpis{grid-template-columns:1fr}
+  .cuerpo{grid-template-columns:1fr;gap:2rem}
+  header{flex-direction:column;align-items:flex-start;gap:.8rem}
+  footer{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+
+<div id="arranque">
+  <span class="logo" aria-label="SC Ads"><span class="sc">SC</span><span class="ads">Ads</span></span>
+  <h1>Tablero<br>de ventas</h1>
+  <p>Un clic para encender. El navegador solo deja sonar la campana después de que alguien toque la pantalla, así que este botón se presiona una vez al abrir la oficina.</p>
+  <button id="encender">Encender el tablero</button>
+</div>
+
+<div id="tablero" aria-live="polite">
+  <header>
+    <div class="marca-bloque">
+      <span class="logo" aria-label="SC Ads"><span class="sc">SC</span><span class="ads">Ads</span></span>
+      <span id="mes">—</span>
+    </div>
+    <div class="reloj">
+      <span id="fecha"></span><b id="hora">--:--</b><span id="pulso" title="Conexión"></span>
+    </div>
+  </header>
+
+  <div id="avisos"></div>
+
+  <div class="kpis">
+    <div class="kpi fuerte">
+      <div class="rotulo">Facturado</div>
+      <div class="flap cifra" id="kFacturado"></div>
+      <div class="pie">del mes, lo que ya se hizo</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Proyectado</div>
+      <div class="flap cifra" id="kProyectado"></div>
+      <div class="pie">todo el mes, incluye facturado</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Meta del mes</div>
+      <div class="flap cifra" id="kMeta"></div>
+      <div class="mini"><i id="miniMeta"></i></div>
+      <div class="pie" id="pieMeta">facturado sobre la meta</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Ventas</div>
+      <div class="flap cifra" id="kVentas"></div>
+      <div class="pie" id="pieVentas">cerradas este mes</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Inversión</div>
+      <div class="flap cifra" id="kInversion"></div>
+      <div class="pie" id="pieInversion">pauta del mes</div>
+    </div>
+  </div>
+
+  <div class="cuerpo">
+    <section class="panel">
+      <div class="rotulo-col">Evolución del mes <em id="rotuloDia"></em></div>
+      <div id="grafico"></div>
+      <div class="leyenda">
+        <span><i></i>ya se hizo</span>
+        <span class="porvenir"><i></i>agendado por venir</span>
+        <span class="meta"><i></i>meta</span>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="rotulo-col">Vendedoras</div>
+      <div id="vendedoras"></div>
+      <div id="vacio">Todavía no hay ventas este mes. La primera que se registre aparece aquí y suena la campana.</div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="rotulo-col">Clientes</div>
+    <ul id="clientes"></ul>
+  </section>
+</div>
+
+<div id="fiesta" role="status">
+  <div class="grito" id="fiestaGrito">Venta</div>
+  <div class="quien" id="fiestaQuien">—</div>
+  <div class="flap cuanto" id="fiestaCuanto"></div>
+  <div class="detalle" id="fiestaDetalle"></div>
+</div>
+<div id="papelitos"></div>
+
+<footer>T · venta de prueba &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
+
+<script>
+/* ================================================================
+   CONFIGURACIÓN
+   ================================================================ */
+const CONFIG = {
+  modo: 'api',             // 'demo' para probar · 'api' cuando esté la hoja
+
+  // Tiene que ser la URL que termina en /exec, la de Gestionar implementaciones:
+  //   https://script.google.com/macros/s/AKfycb.../exec
+  // NO la de script.googleusercontent.com/macros/echo?user_content_key=... que
+  // sale en la barra del navegador al abrir el endpoint: esa es la redirección
+  // interna, la llave se vence y el tablero se queda en blanco sin explicar nada.
+  urlDatos: 'https://script.google.com/macros/s/AKfycbwAuMbEmJbKtWTMOGklqhkUuqZWXqLHimuZpXY3rtxwTlwtCZKF0I2SetanPdnkGo7-/exec',
+  llave: 'scads2026tv',    // la misma que guardaste en LLAVE_TABLERO
+
+  intervaloMs: 60000,      // cada cuánto pregunta por ventas nuevas
+  sonidoURL: '',           // mp3 propio; vacío = campana sintetizada
+  duracionFiestaMs: 6500,
+  minutosSinLatido: 6,     // si el recolector no late en este rato, sale aviso rojo
+  maxDeGolpe: 4,           // más ventas nuevas que esto en una sola pasada = carga masiva, no suena
+  horaRecarga: 4           // recarga sola a esta hora, para que el TV no lleve semanas abierto
+};
+
+// Abrir la página con ?demo al final fuerza el modo de prueba sin tocar el archivo.
+// Sirve para revisarla en un portátil mientras el televisor sigue con los datos reales.
+if (location.search.indexOf('demo') !== -1) CONFIG.modo = 'demo';
+
+// El navegador del televisor no siempre trae el locale es-CO, y toLocaleDateString
+// devuelve 'August'. En modo api el mes lo manda el servidor; esto es para el demo.
+const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio',
+                  'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const pesos = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
+const $ = s => document.querySelector(s);
+const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================================================================
+   FICHAS QUE GIRAN
+   ================================================================ */
+function pintarFlap(cont, texto){
+  const chars = String(texto).split('');
+  while (cont.children.length > chars.length) cont.lastChild.remove();
+  while (cont.children.length < chars.length){
+    const f = document.createElement('span');
+    f.className = 'ficha';
+    f.innerHTML = '<span class="cara nueva"></span>';
+    cont.appendChild(f);
+  }
+  chars.forEach((c, i) => {
+    const ficha = cont.children[i], nueva = ficha.querySelector('.cara.nueva');
+    const antes = nueva.textContent;
+    ficha.classList.toggle('simbolo', !/[0-9]/.test(c));
+    if (antes === c) return;
+    if (antes === '' || quieto){ nueva.textContent = c; return; }
+    const vieja = document.createElement('span');
+    vieja.className = 'cara vieja';
+    vieja.textContent = antes;
+    ficha.appendChild(vieja);
+    nueva.textContent = c;
+    ficha.classList.remove('girando');
+    void ficha.offsetWidth;
+    ficha.classList.add('girando');
+    setTimeout(() => { vieja.remove(); ficha.classList.remove('girando'); }, 480);
+  });
+}
+
+/* ================================================================
+   SONIDO
+   ================================================================ */
+let audio = null, silencio = false, pista = null;
+function abrirAudio(){
+  if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+  if (audio.state === 'suspended') audio.resume();
+  if (CONFIG.sonidoURL && !pista){ pista = new Audio(CONFIG.sonidoURL); pista.preload = 'auto'; }
+}
+function campana(){
+  if (silencio) return;
+  if (pista){ pista.currentTime = 0; pista.play().catch(()=>{}); return; }
+  if (!audio) return;
+  const t = audio.currentTime, maestro = audio.createGain();
+  maestro.gain.value = 0.28; maestro.connect(audio.destination);
+  [1, 2.02, 2.68, 4.07, 5.41].forEach((mult, i) => {
+    const osc = audio.createOscillator(), g = audio.createGain();
+    osc.type = 'sine'; osc.frequency.value = 392 * mult;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.9 / (i + 1.4), t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + 2.6 - i * 0.28);
+    osc.connect(g); g.connect(maestro);
+    osc.start(t); osc.stop(t + 2.8);
+  });
+}
+function papelitos(){
+  if (quieto) return;
+  const caja = $('#papelitos'), tonos = ['#FFFFFF','#93B4FF','#0B1B33','#BFD3FF'];
+  for (let i = 0; i < 70; i++){
+    const p = document.createElement('div');
+    p.className = 'papelito';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = tonos[i % tonos.length];
+    caja.appendChild(p);
+    p.animate([
+      { transform:'translate(0,0) rotate(0deg)', opacity:1 },
+      { transform:`translate(${Math.random()*26-13}vw,108vh) rotate(${Math.random()*900-450}deg)`, opacity:.85 }
+    ], { duration:2600+Math.random()*1800, delay:Math.random()*600, easing:'cubic-bezier(.3,.5,.6,1)' })
+     .onfinish = () => p.remove();
+  }
+}
+
+/* ================================================================
+   ESTADO
+   ================================================================ */
+const estado = { datos:null, vistas:new Set(), cola:[], celebrando:false, arrancado:false };
+
+function recibir(datos){
+  estado.datos = datos;
+  const primeraVez = !estado.arrancado;
+  const nuevas = [];
+  (datos.ventas || []).forEach(v => {
+    if (estado.vistas.has(v.id)) return;
+    estado.vistas.add(v.id);
+    if (!primeraVez) nuevas.push(v);
+  });
+  estado.arrancado = true;
+
+  // La campana suena cuando se hace o se agenda una venta, sin importar para qué
+  // día quedó. Lo que no puede pasar es que alguien pegue el mes entero de una y el
+  // televisor se quede veinte minutos tirando confeti: eso no es actividad, es
+  // digitación, y entra callado.
+  if (nuevas.length > CONFIG.maxDeGolpe) nuevas.length = 0;
+  nuevas.forEach(v => estado.cola.push(v));
+
+  if (estado.cola.length) siguienteFiesta(); else dibujar();
+}
+
+function siguienteFiesta(){
+  if (estado.celebrando) return;
+  const v = estado.cola.shift();
+  if (!v){ dibujar(); return; }
+  estado.celebrando = true;
+  $('#fiestaGrito').textContent = v.estado === 'Facturada' ? 'Venta facturada' : 'Venta agendada';
+  $('#fiestaQuien').textContent = v.vendedora;
+  pintarFlap($('#fiestaCuanto'), pesos.format(v.monto));
+  $('#fiestaDetalle').textContent = [v.cliente, v.producto].filter(Boolean).join(' · ');
+  $('#fiesta').classList.add('viva');
+  campana(); papelitos();
+  setTimeout(() => {
+    $('#fiesta').classList.remove('viva');
+    estado.celebrando = false;
+    dibujar();
+    setTimeout(siguienteFiesta, 400);
+  }, CONFIG.duracionFiestaMs);
+}
+
+/* ================================================================
+   DIBUJAR
+   ================================================================ */
+function dibujar(){
+  const d = estado.datos;
+  if (!d) return;
+
+  $('#mes').textContent = d.mes || '';
+  pintarFlap($('#kFacturado'), pesos.format(d.totales.facturado));
+  pintarFlap($('#kProyectado'), pesos.format(d.totales.proyectado));
+  pintarFlap($('#kInversion'), pesos.format(d.totales.inversion));
+  $('#pieInversion').textContent = d.metaConectada ? 'pauta del mes' : 'pendiente de conectar Meta';
+
+  const clientes = d.clientes || [];
+  const metaTotal = clientes.reduce((s, c) => s + (Number(c.metaMes) || 0), 0);
+  const avance = metaTotal > 0 ? d.totales.facturado / metaTotal : 0;
+  pintarFlap($('#kMeta'), metaTotal > 0 ? Math.round(avance * 100) + '%' : '—');
+  $('#miniMeta').style.width = Math.min(100, avance * 100) + '%';
+  $('#pieMeta').textContent = metaTotal > 0
+    ? 'de ' + pesos.format(metaTotal) : 'falta llenar meta_mes en Fuentes';
+
+  const cuantas = clientes.reduce((s, c) => s + (Number(c.ventas) || 0), 0);
+  pintarFlap($('#kVentas'), String(cuantas));
+  $('#pieVentas').textContent = cuantas === 1 ? 'cerrada este mes' : 'cerradas este mes';
+
+  if (d.dia && d.diasDelMes) $('#rotuloDia').textContent = 'día ' + d.dia + ' de ' + d.diasDelMes;
+  pintarGrafico(d);
+  ['#kFacturado','#kProyectado','#kMeta','#kVentas','#kInversion'].forEach(x => encajarCifra($(x)));
+
+  pintarAvisos();
+  pintarClientes(clientes);
+
+  const orden = (d.vendedoras || []);
+  $('#vacio').style.display = orden.length ? 'none' : 'block';
+  const cont = $('#vendedoras');
+  const antes = new Map();
+  [...cont.children].forEach(el => antes.set(el.dataset.quien, el.getBoundingClientRect().top));
+  // Lo facturado ya está adentro de lo proyectado: sumarlos contaría dos veces la
+  // misma plata. El ranking va por el total del mes de cada una.
+  const tope = orden.length ? orden[0].proyectado || 1 : 1;
+  const vistos = new Set();
+
+  orden.forEach((v, i) => {
+    let fila = cont.querySelector(`[data-quien="${CSS.escape(v.vendedora)}"]`);
+    if (!fila){
+      fila = document.createElement('div');
+      fila.className = 'fila';
+      fila.dataset.quien = v.vendedora;
+      fila.innerHTML = `<div class="puesto"></div>
+        <div class="nb"><div class="nombre"></div><div class="barra"><i></i></div><div class="cierres"></div></div>
+        <div class="flap monto"></div>`;
+      cont.appendChild(fila);
+    }
+    vistos.add(v.vendedora);
+    fila.querySelector('.puesto').textContent = String(i + 1).padStart(2, '0');
+    fila.querySelector('.nombre').textContent = v.vendedora;
+    fila.querySelector('.barra i').style.width = Math.max(3, (v.proyectado / tope) * 100) + '%';
+    fila.querySelector('.cierres').textContent =
+      v.ventas + (v.ventas === 1 ? ' venta' : ' ventas') + ' · ' + pesos.format(v.facturado) + ' facturado';
+    pintarFlap(fila.querySelector('.monto'), pesos.format(v.proyectado));
+    encajarCifra(fila.querySelector('.monto'));
+    fila.classList.toggle('lider', i === 0);
+    cont.appendChild(fila);
+  });
+  [...cont.children].forEach(el => { if (!vistos.has(el.dataset.quien)) el.remove(); });
+
+  if (!quieto){
+    [...cont.children].forEach(el => {
+      const y0 = antes.get(el.dataset.quien);
+      if (y0 == null) return;
+      const dy = y0 - el.getBoundingClientRect().top;
+      if (Math.abs(dy) < 1) return;
+      el.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],
+                 {duration:620, easing:'cubic-bezier(.2,.8,.2,1)'});
+    });
+  }
+}
+
+/**
+ * Los nombres vienen de hojas que llenan a mano cinco clientes distintos: se
+ * pintan con textContent y no con innerHTML, para que un "&" o un "<" mal puesto
+ * no rompa la pantalla que ve toda la oficina.
+ *
+ * La barra mide facturado contra meta_mes. Solo facturado: el proyectado no se le
+ * suma, sumarlos daría un avance que no existe.
+ */
+function pintarClientes(clientes){
+  const ul = $('#clientes');
+  const vistos = new Set();
+
+  clientes.forEach(c => {
+    let li = ul.querySelector(`[data-cliente="${CSS.escape(c.cliente)}"]`);
+    if (!li){
+      li = document.createElement('li');
+      li.dataset.cliente = c.cliente;
+      li.innerHTML = '<span class="nombre"></span><span class="cifra"></span>'
+                   + '<span class="metabarra"><i></i></span><span class="detalle"></span>';
+      li.style.order = String(ul.children.length);
+      ul.appendChild(li);
+    }
+    vistos.add(c.cliente);
+
+    li.querySelector('.nombre').textContent = c.cliente;
+    li.querySelector('.cifra').textContent = pesos.format(c.facturado);
+    encajarCifra(li.querySelector('.cifra'));
+
+    const meta = Number(c.metaMes) || 0;
+    const avance = meta > 0 ? c.facturado / meta : 0;
+    const barra = li.querySelector('.metabarra');
+    barra.style.visibility = meta > 0 ? 'visible' : 'hidden';
+    barra.querySelector('i').style.width = Math.min(100, avance * 100) + '%';
+    barra.classList.toggle('cumplida', avance >= 1);
+    li.classList.toggle('cumplido', meta > 0 && avance >= 1);
+
+    const chips = [];
+    if (meta > 0) chips.push(['meta', Math.round(avance * 100) + '%', avance >= 1]);
+    chips.push(['del mes', pesos.format(c.proyectado), false]);
+    chips.push(['ventas', String(c.ventas), false]);
+    if (c.inversion > 0) chips.push(['pauta', pesos.format(c.inversion), false]);
+
+    const det = li.querySelector('.detalle');
+    det.textContent = '';
+    chips.forEach(([rotulo, valor, fuerte]) => {
+      const chip = document.createElement('span');
+      if (fuerte) chip.className = 'cumplida';
+      chip.append(rotulo + ' ');
+      const b = document.createElement('b');
+      b.textContent = valor;
+      chip.appendChild(b);
+      det.appendChild(chip);
+    });
+
+    ul.appendChild(li);   // reordena sin recrear: conserva el orden de Fuentes
+  });
+
+  [...ul.children].forEach(li => { if (!vistos.has(li.dataset.cliente)) li.remove(); });
+}
+
+/* ================================================================
+   GRÁFICA DEL MES
+   ================================================================
+   SVG a mano, sin librerías. Una sola curva: el acumulado del mes por
+   día de cita. Sólida hasta hoy (lo que ya se hizo efectivo) y punteada
+   de ahí en adelante (lo que ya está agendado). Que las dos partes sean
+   la misma curva es justo el modelo: lo facturado va por dentro.
+   ================================================================ */
+const G = { ancho:1000, alto:330, izq:96, der:18, arriba:18, abajo:34 };
+
+function pintarGrafico(d){
+  const caja = $('#grafico');
+  const dias = Number(d.diasDelMes) || 30;
+  const diaHoy = Math.min(Math.max(Number(d.dia) || 1, 1), dias);
+
+  // acumulado por día de cita
+  const porDia = new Array(dias + 2).fill(0);
+  (d.ventas || []).forEach(v => {
+    const i = Number(v.dia) || 0;
+    if (i >= 1 && i <= dias) porDia[i] += Number(v.monto) || 0;
+  });
+  const acum = [0];
+  for (let i = 1; i <= dias; i++) acum[i] = acum[i - 1] + porDia[i];
+
+  const meta = (d.clientes || []).reduce((s, c) => s + (Number(c.metaMes) || 0), 0);
+
+  // La escala la manda el mes, no la meta. A principio de mes la meta es varias veces
+  // lo vendido, y meterla en el techo deja la curva aplastada contra el piso sin poder
+  // leer nada. La meta se dibuja cuando ya está a la vista; mientras tanto vive en su
+  // propio indicador, que siempre muestra el porcentaje.
+  const total = acum[dias];
+  const metaVisible = meta > 0 && meta <= total * 1.6 ? meta : 0;
+  // El techo sube al siguiente número redondo: el eje dice "$40 M" y no "$38,4 M".
+  const paso = pasoRedondo(Math.max(total, metaVisible, 1) * 1.1 / 4);
+  const techo = paso * 4;
+
+  const x = i => G.izq + (i / dias) * (G.ancho - G.izq - G.der);
+  const y = v => G.alto - G.abajo - (v / techo) * (G.alto - G.arriba - G.abajo);
+  const base = G.alto - G.abajo;
+
+  // ── rejilla y ejes ──
+  const partes = [];
+  for (let k = 0; k <= 4; k++){
+    const v = techo * k / 4, py = y(v);
+    partes.push(`<line x1="${G.izq}" y1="${py}" x2="${G.ancho - G.der}" y2="${py}" class="reja"/>`);
+    partes.push(`<text x="${G.izq - 12}" y="${py + 4}" class="ejeY">${enMillones(v)}</text>`);
+  }
+  for (let i = 1; i <= dias; i++){
+    if (i !== 1 && i !== dias && i % 5 !== 0) continue;
+    // el último día se dibuja siempre; el múltiplo de 5 pegado a él se pisaría
+    if (i !== dias && dias - i < 3) continue;
+    partes.push(`<text x="${x(i)}" y="${base + 22}" class="ejeX">${i}</text>`);
+  }
+
+  // ── la curva ──
+  const punto = i => `${x(i)},${y(acum[i])}`;
+  const hasta = n => Array.from({length: n + 1}, (_, i) => punto(i)).join(' ');
+  const desde = (a, b) => Array.from({length: b - a + 1}, (_, k) => punto(a + k)).join(' ');
+
+  // lo que ya pasó: área sólida
+  partes.push(`<polygon class="areaFirme" points="${G.izq},${base} ${hasta(diaHoy)} ${x(diaHoy)},${base}"/>`);
+  // lo que falta del mes: área tenue
+  if (diaHoy < dias){
+    partes.push(`<polygon class="areaPorVenir" points="${x(diaHoy)},${base} ${desde(diaHoy, dias)} ${x(dias)},${base}"/>`);
+    partes.push(`<polyline class="lineaPorVenir" points="${desde(diaHoy, dias)}"/>`);
+  }
+  partes.push(`<polyline class="lineaFirme" points="${hasta(diaHoy)}"/>`);
+
+  // ── la meta, cuando cabe ──
+  if (metaVisible){
+    partes.push(`<line x1="${G.izq}" y1="${y(metaVisible)}" x2="${G.ancho - G.der}" y2="${y(metaVisible)}" class="lineaMeta"/>`);
+    partes.push(`<text x="${G.ancho - G.der}" y="${y(metaVisible) - 9}" class="rotuloMeta">meta ${enMillones(metaVisible)}</text>`);
+  }
+  // la leyenda no anuncia una línea que no está dibujada
+  const leyendaMeta = document.querySelector('.leyenda .meta');
+  if (leyendaMeta) leyendaMeta.style.display = metaVisible ? '' : 'none';
+
+  // ── el día de hoy ──
+  partes.push(`<line x1="${x(diaHoy)}" y1="${G.arriba}" x2="${x(diaHoy)}" y2="${base}" class="lineaHoy"/>`);
+  partes.push(`<circle cx="${x(diaHoy)}" cy="${y(acum[diaHoy])}" r="6" class="puntoHoy"/>`);
+
+  caja.innerHTML = `<svg viewBox="0 0 ${G.ancho} ${G.alto}" preserveAspectRatio="xMidYMid meet"
+    role="img" aria-label="Acumulado del mes por día">${partes.join('')}</svg>`;
+}
+
+/**
+ * El siguiente número redondo hacia arriba. La escalera es fina a propósito: con
+ * solo 1-2-5 un mes de $187 M se iba a un eje de $400 M y la curva quedaba a media
+ * altura, con la mitad del panel en blanco.
+ */
+const ESCALERA = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+function pasoRedondo(v){
+  if (!(v > 0)) return 1;
+  const exp = Math.pow(10, Math.floor(Math.log10(v)));
+  const n = v / exp;
+  return (ESCALERA.find(x => n <= x + 1e-9) || 10) * exp;
+}
+
+/**
+ * Una cifra de nueve dígitos no cabe donde cabía una de seis, y el mes crece. En
+ * vez de adivinar un tamaño, se mide: si la cifra se sale de su tarjeta, se encoge
+ * hasta que entre. Corre una vez por ciclo, no en cada cuadro.
+ */
+function encajarCifra(cont){
+  if (!cont || !cont.parentElement) return;
+  cont.style.fontSize = '';
+  const caja = cont.parentElement, cs = getComputedStyle(caja);
+  const limite = caja.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  if (limite <= 0) return;
+  let tam = parseFloat(getComputedStyle(cont).fontSize);
+  let antes = Infinity;
+  for (let i = 0; i < 14 && cont.scrollWidth > limite; i++){
+    // Si encoger la letra no encoge la caja es que la caja no depende del texto:
+    // seguir bajando dejaría la cifra ilegible sin arreglar nada.
+    if (cont.scrollWidth >= antes) break;
+    antes = cont.scrollWidth;
+    tam *= 0.93;
+    cont.style.fontSize = tam + 'px';
+  }
+}
+
+/** Las cifras del eje en millones: "$12 M" se lee a tres metros, "$12.000.000" no. */
+function enMillones(v){
+  if (v >= 1e6){
+    const m = v / 1e6;
+    return '$' + (m >= 100 ? Math.round(m).toLocaleString('es-CO')
+                : m >= 10  ? String(Math.round(m))
+                :            m.toFixed(1).replace('.', ',')) + ' M';
+  }
+  if (v >= 1e3) return '$' + Math.round(v / 1e3) + ' K';
+  return '$0';
+}
+
+/* ================================================================
+   DATOS
+   ================================================================ */
+function urlConLlave(){
+  const sep = CONFIG.urlDatos.includes('?') ? '&' : '?';
+  return CONFIG.urlDatos + sep + 'k=' + encodeURIComponent(CONFIG.llave) + '&t=' + Date.now();
+}
+
+/**
+ * Las dos formas de equivocarse con esta URL cuestan una tarde de depuración,
+ * así que la pantalla lo dice en vez de quedarse muda.
+ */
+function revisarURL(){
+  const u = CONFIG.urlDatos.trim();
+  if (!u) return 'Falta pegar la URL /exec del Apps Script en CONFIG.urlDatos';
+  if (u.includes('script.googleusercontent.com'))
+    return 'La URL de CONFIG.urlDatos es la redirección interna de Google y se vence. '
+         + 'Pega la que termina en /exec, de Implementar → Gestionar implementaciones';
+  // Mientras se prueba se usa la implementacion de prueba, que termina en /dev.
+  // Esa solo responde a alguien con acceso al script y con sesion de Google abierta.
+  if (u.endsWith('/dev') || u.endsWith('/exec')) return null;
+  return 'La URL de CONFIG.urlDatos debería terminar en /exec (o en /dev mientras pruebas)';
+}
+
+async function traerDatos(){
+  if (CONFIG.modo === 'demo') return;
+  try{
+    const r = await fetch(urlConLlave(), { redirect:'follow' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    aceptar(await r.json());
+  } catch (e){ jsonp(); }   // Apps Script a veces no deja pasar el fetch entre orígenes
+}
+
+function jsonp(){
+  const nombre = 'cb' + Date.now();
+  const limpiar = () => { delete window[nombre]; s.remove(); };
+  window[nombre] = datos => { aceptar(datos); limpiar(); };
+  const s = document.createElement('script');
+  s.src = urlConLlave() + '&callback=' + nombre;
+  s.onerror = () => { caida(); limpiar(); };
+  document.body.appendChild(s);
+  setTimeout(() => { if (window[nombre]){ caida(); limpiar(); } }, 15000);
+}
+
+function aceptar(datos){
+  avisar(AVISO_RED, false);
+  if (datos && datos.error === 'llave'){
+    marcarPulso(false); avisar(AVISO_LLAVE, true); return;
+  }
+  avisar(AVISO_LLAVE, false);
+  marcarPulso(true);
+  recibir(datos);
+  revisarLatido(datos);
+}
+
+function caida(){
+  marcarPulso(false);
+  avisar(AVISO_RED, true);
+}
+
+function marcarPulso(ok){ $('#pulso').classList.toggle('frio', !ok); }
+
+/* ================================================================
+   AVISOS
+   Los del servidor y los de la propia página van a la misma franja roja.
+   Antes se pisaban: dibujar() borraba el error de conexión en el siguiente ciclo.
+   ================================================================ */
+const avisosLocales = new Set();
+const AVISO_LATIDO = 'El recolector no está corriendo: los números pueden estar viejos';
+const AVISO_LLAVE  = 'La llave del tablero no coincide con LLAVE_TABLERO';
+const AVISO_RED    = 'Sin conexión con la hoja de cálculo';
+
+function avisar(t, si){
+  if (!t) return;
+  if (si === false) avisosLocales.delete(t); else avisosLocales.add(t);
+  pintarAvisos();
+}
+
+function pintarAvisos(){
+  const delServidor = (estado.datos && estado.datos.avisos) || [];
+  const todos = [...new Set([...delServidor, ...avisosLocales])].filter(Boolean);
+  const caja = $('#avisos');
+  caja.textContent = todos.join('   ·   ');
+  caja.classList.toggle('hay', todos.length > 0);
+}
+
+/** Un disparador caído deja el televisor mostrando cifras viejas con cara de al día. */
+function revisarLatido(d){
+  const min = Number(d.latidoHaceMin);
+  avisar(AVISO_LATIDO, !isNaN(min) && min >= 0 && min > CONFIG.minutosSinLatido);
+}
+
+/* ================================================================
+   DEMO
+   ================================================================ */
+const DEMO = {
+  clientes:['Dayan','Daniela','Cucalón','Autonal','Decotienda'],
+  metas:{'Dayan':20000000,'Daniela':15000000,'Cucalón':30000000,
+         'Autonal':80000000,'Decotienda':10000000},
+  vendedoras:['Manuela','Susana','Valentina'],
+  productos:['Plan mensual','Paquete premium','Sesión única']
+};
+let demoN = 0;
+const demoVentas = [];
+
+function ventaDemo(nueva){
+  demoN++;
+  const hoy = new Date();
+  // Las ventas de mentira se reparten por todo el mes, unas ya pasadas y otras por
+  // venir, que es lo unico que deja ver el modelo: facturado por dentro de proyectado.
+  const dia = nueva ? hoy.getDate()
+    : 1 + Math.floor(Math.random() * (diasDelMes(hoy) - 1)) + 1;
+  const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), Math.min(dia, diasDelMes(hoy)));
+  const monto = (Math.floor(Math.random()*24)+4)*100000;
+  return {
+    id:'demo-' + demoN,
+    cliente:DEMO.clientes[Math.floor(Math.random()*DEMO.clientes.length)],
+    vendedora:DEMO.vendedoras[Math.floor(Math.random()*DEMO.vendedoras.length)],
+    monto:monto,
+    estado:'Agendada',
+    producto:DEMO.productos[Math.floor(Math.random()*DEMO.productos.length)],
+    ts:fecha.toISOString(),
+    dia:fecha.getDate()
+  };
+}
+
+function diasDelMes(f){ return new Date(f.getFullYear(), f.getMonth() + 1, 0).getDate(); }
+
+/** El mismo reparto que hace el servidor en repartir(). */
+function repartirDemo(v){
+  const monto = Number(v.monto) || 0;
+  if (v.estado === 'Anulada') return { facturado: 0, proyectado: 0 };
+  const hoy = new Date(); hoy.setHours(23, 59, 59, 999);
+  return { facturado: new Date(v.ts) <= hoy ? monto : 0, proyectado: monto };
+}
+
+function armarDemo(){
+  const porCliente = {}, porVendedora = {};
+  DEMO.clientes.forEach(c => porCliente[c] =
+    {cliente:c,facturado:0,proyectado:0,ventas:0,inversion:0,metaMes:DEMO.metas[c] || 0});
+  demoVentas.forEach(v => {
+    const plata = repartirDemo(v);
+    const c = porCliente[v.cliente];
+    c.facturado += plata.facturado; c.proyectado += plata.proyectado; c.ventas++;
+    const w = porVendedora[v.vendedora] || {vendedora:v.vendedora,facturado:0,proyectado:0,ventas:0};
+    w.facturado += plata.facturado; w.proyectado += plata.proyectado; w.ventas++;
+    porVendedora[v.vendedora] = w;
+  });
+  const clientes = Object.values(porCliente);
+  return {
+    mes: MESES_ES[new Date().getMonth()] + ' ' + new Date().getFullYear(),
+    latidoHaceMin: 0,
+    dormido: false,
+    metaConectada: false,
+    dia: new Date().getDate(),
+    diasDelMes: diasDelMes(new Date()),
+    totales:{
+      facturado:clientes.reduce((s,c)=>s+c.facturado,0),
+      proyectado:clientes.reduce((s,c)=>s+c.proyectado,0),
+      inversion:0
+    },
+    clientes:clientes,
+    vendedoras:Object.values(porVendedora).sort((a,b)=>(b.proyectado-a.proyectado)||(b.facturado-a.facturado)),
+    ventas:demoVentas.slice(),
+    avisos:[]
+  };
+}
+
+function nuevaDemo(){
+  demoVentas.push(ventaDemo(true));
+  recibir(armarDemo());
+}
+
+function agendarDemo(){
+  setTimeout(() => { nuevaDemo(); agendarDemo(); }, 12000 + Math.random()*14000);
+}
+
+/* ================================================================
+   RELOJ Y TECLAS
+   ================================================================ */
+function reloj(){
+  const h = new Date();
+  $('#hora').textContent = h.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false});
+  $('#fecha').textContent = h.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+}
+
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (k === 't'){
+    if (CONFIG.modo === 'demo') nuevaDemo();
+    else { estado.cola.push(ventaDemo(true)); siguienteFiesta(); }
+  }
+  if (k === 'm') silencio = !silencio;
+  if (k === 'f'){
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(()=>{});
+  }
+});
+
+/** Sin esto la pantalla del televisor se apaga sola a los pocos minutos. */
+async function mantenerDespierta(){
+  if (!('wakeLock' in navigator)) return;
+  try{
+    let cerrojo = await navigator.wakeLock.request('screen');
+    // El navegador lo suelta al minimizar o cambiar de pestaña: hay que volver a pedirlo.
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && cerrojo.released){
+        try{ cerrojo = await navigator.wakeLock.request('screen'); } catch (e){}
+      }
+    });
+  } catch (e){}
+}
+
+/**
+ * El televisor queda encendido semanas seguidas. Una recarga de madrugada suelta
+ * la memoria acumulada y trae el HTML nuevo si se desplegó algo. A esa hora no hay
+ * nadie mirando, así que no se pierde ninguna celebración.
+ */
+function recargaDeMadrugada(){
+  setInterval(() => {
+    const h = new Date();
+    if (h.getHours() === CONFIG.horaRecarga && h.getMinutes() < 5) location.reload();
+  }, 240000);
+}
+
+$('#encender').addEventListener('click', () => {
+  document.body.classList.add('encendido');
+  abrirAudio();
+  document.documentElement.requestFullscreen?.().catch(()=>{});
+  mantenerDespierta();
+  recargaDeMadrugada();
+  reloj(); setInterval(reloj, 20000);
+  ['#kFacturado','#kProyectado','#kInversion'].forEach(s => pintarFlap($(s), pesos.format(0)));
+  pintarFlap($('#kVentas'), '0');
+  pintarFlap($('#kMeta'), '0%');
+
+  if (CONFIG.modo === 'demo'){
+    for (let i = 0; i < 4; i++) demoVentas.push(ventaDemo());
+    recibir(armarDemo());
+    agendarDemo();
+    return;
+  }
+
+  // Si la URL está mal, se dice y no se insiste: una pantalla en ceros sin
+  // explicación hace que alguien concluya que no hubo ventas.
+  const problema = revisarURL();
+  if (problema){ marcarPulso(false); avisar(problema, true); return; }
+
+  traerDatos();
+  setInterval(traerDatos, CONFIG.intervaloMs);
+});
+</script>
+</body>
+</html>

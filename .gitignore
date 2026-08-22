@@ -1,0 +1,7 @@
+# basura del sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# archivos de bloqueo que deja Excel al abrir un .xlsx
+~$*
