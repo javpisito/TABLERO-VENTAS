@@ -284,7 +284,8 @@ Lo que va en azul sólido con texto blanco es lo que importa: la tarjeta de Fact
 fila de la vendedora líder y la pantalla de celebración. Es el tratamiento de "resultado
 que importa" del reporte.
 
-Archivo (variable, ancho expandido para nombres) + Martian Mono (cifras).
+Archivo (variable, ancho expandido para nombres) + Martian Mono (cifras) + Playfair
+Display, solo para el "SC" del logo.
 La firma visual son las fichas que giran, tipo tablero de aeropuerto.
 
 **Distribución**, de arriba abajo: encabezado · franja de avisos · cinco indicadores ·
@@ -360,7 +361,7 @@ Meta y lo muestra como aviso en pantalla.
 
 Sin resolver: los ids de las cuentas publicitarias.
 
-Los cinco clientes son Dayan, Daniela, Cucalón, Autonal y Decotienda.
+Los cinco clientes son Dayan, Daniela, Cucalón, Automat Soft y Decotienda.
 
 ## Cómo ayudar
 
