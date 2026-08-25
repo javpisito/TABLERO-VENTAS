@@ -50,6 +50,8 @@ index.html       (estático, abierto en el TV de la oficina)
 | `recolector.js` | Apps Script pegado en la hoja consolidada | Sí, es el backend |
 | `index.html` | La página del televisor, sin dependencias ni build | Sí, es el frontend |
 | `worker.js` | Worker de Cloudflare. Guarda la llave para que no viaje al TV | Sí, se pega en el panel |
+| `servir-local.ps1` | Servidor del televisor, para que suenen las canciones | Rara vez |
+| `tablero.bat` | Doble clic que lanza lo anterior | No |
 | `consolidado-scads.xlsx` | Plantilla de la hoja consolidada | Solo si cambia el esquema |
 | `plantilla-hoja-cliente.xlsx` | Las dos pestañas que se copian a cada cliente | Solo si cambia el contrato |
 
@@ -104,6 +106,28 @@ venta. Es lo contrario de la plata: la campana es del momento en que se registra
 plata es del día en que la venta se hace efectiva.
 
 Cuando llega el día y el dinero pasa de proyectado a facturado, no vuelve a sonar.
+
+**Cada vendedora tiene su canción, y los MP3 no van al repositorio.** El repo es público
+y GitHub Pages serviría esos archivos a internet, que ya no es sonar música en la oficina
+sino distribuirla. `audio/` está en `.gitignore` y existe solo en la copia del televisor.
+
+Por eso hay dos entornos con el mismo HTML: en GitHub Pages los archivos dan 404 y todas
+caen a la campana sintetizada; en el TV, que abre la copia local con `tablero.bat`, suenan
+las canciones. No hay bifurcación en el código — el 404 *es* el mecanismo.
+
+Los clips van de 5 a 8 segundos. Lo que siga sonando cuando termina la fiesta se corta con
+`callar()`: un clip largo se quedaría sonando encima del tablero ya cerrado, y dos ventas
+seguidas se encimarían.
+
+**La barra de la vendedora mide contra su meta, no contra la líder.** Medía `proyectado`
+sobre la proyección de la primera del ranking, así que la líder salía llena por definición
+y la barra repetía en dibujo lo que el orden de las filas ya decía. Ahora es el mismo
+lenguaje de la gráfica del mes: sólido lo facturado, claro lo que falta.
+
+Las metas viven provisionalmente en `CONFIG.metasVendedoras`, dentro del HTML. Deberían
+estar en la hoja como las de cliente, para que cambiarlas no sea desplegar código;
+`metaDe()` ya prefiere `metaMes` del JSON, así que moverlas allá no obliga a tocar el
+HTML. Quien no tenga meta queda sin barra, que es más honesto que inventarle una.
 
 **Ventana mensual calculada en el servidor**, del día 1 al último del mes, zona
 `America/Bogota`. No hay selector de fechas: nadie escoge nada, y el 1ro de cada mes

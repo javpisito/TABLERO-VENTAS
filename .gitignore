@@ -8,3 +8,7 @@ desktop.ini
 
 # tooling local de sesion, apunta a rutas temporales
 .claude/
+
+# Las canciones de las vendedoras. Fuera del repo a proposito: es publico y
+# Pages las serviria a internet, que es distribuir musica, no sonarla en la oficina.
+audio/

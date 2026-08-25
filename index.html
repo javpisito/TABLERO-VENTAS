@@ -345,7 +345,28 @@ const CONFIG = {
   urlDatos: 'https://tablero-datos.javp182005.workers.dev/',
 
   intervaloMs: 60000,      // cada cuánto pregunta por ventas nuevas
-  sonidoURL: '',           // mp3 propio; vacío = campana sintetizada
+  sonidoURL: '',           // mp3 para todas; vacío = campana sintetizada
+
+  // La canción de cada vendedora, con ruta relativa a este archivo.
+  //
+  // Los MP3 NO están en el repositorio y no deben estarlo: el repo es público y
+  // GitHub Pages los serviría a internet, que ya no es sonar música en la
+  // oficina sino distribuirla. La carpeta audio/ está en .gitignore y vive solo
+  // en la copia del televisor.
+  //
+  // Por eso en la versión de GitHub Pages estos archivos dan 404 y cada
+  // vendedora cae a la campana sintetizada. Es el mismo HTML en los dos lados.
+  //
+  // Clips de 5 a 8 segundos: la fiesta dura duracionFiestaMs y lo que siga
+  // sonando después se corta. Quien no esté en esta lista suena la campana.
+  canciones: {
+    'Laura':     'audio/laura.mp3',
+    'Alejandra': 'audio/alejandra.mp3',
+    'Manuela':   'audio/manuela.mp3',
+    'Susana':    'audio/susana.mp3',
+    'Dayan':     'audio/dayan.mp3',
+    'Santiago':  'audio/santiago.mp3'
+  },
   duracionFiestaMs: 6500,
   minutosSinLatido: 6,     // si el recolector no late en este rato, sale aviso rojo
   maxDeGolpe: 4,           // más ventas nuevas que esto en una sola pasada = carga masiva, no suena
@@ -408,15 +429,55 @@ function pintarFlap(cont, texto){
 /* ================================================================
    SONIDO
    ================================================================ */
-let audio = null, silencio = false, pista = null;
+let audio = null, silencio = false, pista = null, sonando = null;
+const pistas = new Map();   // nombre en minúscula → Audio, o null si el archivo no está
+
 function abrirAudio(){
   if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
   if (audio.state === 'suspended') audio.resume();
   if (CONFIG.sonidoURL && !pista){ pista = new Audio(CONFIG.sonidoURL); pista.preload = 'auto'; }
+
+  // Las canciones se precargan al encender y no al celebrar: buscar el archivo
+  // cuando ya salió el confeti lo hace entrar medio segundo tarde, y ese medio
+  // segundo es justo el que hace que la celebración se sienta rota.
+  Object.keys(CONFIG.canciones || {}).forEach(quien => {
+    const clave = quien.trim().toLowerCase();
+    if (pistas.has(clave)) return;
+    const a = new Audio(CONFIG.canciones[quien]);
+    a.preload = 'auto';
+    // En GitHub Pages la carpeta audio/ no existe y el archivo da 404. Esa
+    // vendedora se queda con la campana sintetizada y no se rompe nada: es lo
+    // que permite que el mismo archivo sirva en el TV con música y en la web sin.
+    a.addEventListener('error', () => pistas.set(clave, null));
+    pistas.set(clave, a);
+  });
 }
-function campana(){
+
+/** Corta lo que esté sonando. Un clip más largo que la fiesta seguiría sonando
+ *  encima del tablero ya cerrado, y con dos ventas seguidas se encimarían. */
+function callar(){
+  if (!sonando) return;
+  sonando.pause();
+  try { sonando.currentTime = 0; } catch (e){}
+  sonando = null;
+}
+
+function campana(quien){
   if (silencio) return;
-  if (pista){ pista.currentTime = 0; pista.play().catch(()=>{}); return; }
+  callar();
+  const suya = pistas.get(String(quien || '').trim().toLowerCase());
+  const elegida = suya || pista;
+  if (elegida){
+    sonando = elegida;
+    elegida.currentTime = 0;
+    elegida.play().catch(() => { sonando = null; campanaSintetica(); });
+    return;
+  }
+  campanaSintetica();
+}
+
+function campanaSintetica(){
+  if (silencio) return;
   if (!audio) return;
   const t = audio.currentTime, maestro = audio.createGain();
   maestro.gain.value = 0.28; maestro.connect(audio.destination);
@@ -483,9 +544,10 @@ function siguienteFiesta(){
   pintarFlap($('#fiestaCuanto'), pesos.format(v.monto));
   $('#fiestaDetalle').textContent = [v.cliente, v.producto].filter(Boolean).join(' · ');
   $('#fiesta').classList.add('viva');
-  campana(); papelitos();
+  campana(v.vendedora); papelitos();
   setTimeout(() => {
     $('#fiesta').classList.remove('viva');
+    callar();
     estado.celebrando = false;
     dibujar();
     setTimeout(siguienteFiesta, 400);
@@ -992,7 +1054,7 @@ document.addEventListener('keydown', e => {
     if (CONFIG.modo === 'demo') nuevaDemo();
     else { estado.cola.push(ventaDemo(true)); siguienteFiesta(); }
   }
-  if (k === 'm') silencio = !silencio;
+  if (k === "m"){ silencio = !silencio; if (silencio) callar(); }
   if (k === 'f'){
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen().catch(()=>{});
