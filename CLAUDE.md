@@ -36,7 +36,7 @@ español. Es una convención deliberada del proyecto, no un accidente.
         |
         |  doGet() sirve JSON del mes en curso, protegido con una llave
         v
-tablero-v2.html  (estático, en GitHub Pages, abierto en el TV de la oficina)
+index.html       (estático, en GitHub Pages, abierto en el TV de la oficina)
 ```
 
 ## Archivos
@@ -44,7 +44,7 @@ tablero-v2.html  (estático, en GitHub Pages, abierto en el TV de la oficina)
 | Archivo | Qué es | ¿Se edita? |
 |---|---|---|
 | `recolector.js` | Apps Script pegado en la hoja consolidada | Sí, es el backend |
-| `tablero-v2.html` | La página del televisor, sin dependencias ni build | Sí, es el frontend |
+| `index.html` | La página del televisor, sin dependencias ni build | Sí, es el frontend |
 | `consolidado-scads.xlsx` | Plantilla de la hoja consolidada | Solo si cambia el esquema |
 | `plantilla-hoja-cliente.xlsx` | Las dos pestañas que se copian a cada cliente | Solo si cambia el contrato |
 

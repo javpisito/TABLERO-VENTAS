@@ -14,7 +14,7 @@ antes de tocar cualquier archivo.
 | Archivo | Qué es |
 |---|---|
 | `recolector.js` | El backend. Va pegado en Extensiones → Apps Script de la hoja consolidada |
-| `tablero-v2.html` | La página del televisor. Sin dependencias ni build: se abre con doble clic |
+| `index.html` | La página del televisor. Sin dependencias ni build: se abre con doble clic |
 | `consolidado-scads.xlsx` | Plantilla de la hoja consolidada (Fuentes · Registro · Trafico · Resumen) |
 | `plantilla-hoja-cliente.xlsx` | Las dos pestañas que se copian a la hoja de cada cliente |
 | `legado/` | La generación anterior. No es referencia de nada, ver CLAUDE.md |
@@ -27,7 +27,7 @@ No hay nada que instalar. Se clona y ya:
 git clone https://github.com/javpisito/TABLERO-VENTAS.git
 ```
 
-Para ver el tablero sin conectar nada, se abre `tablero-v2.html` con `?demo` al final de
+Para ver el tablero sin conectar nada, se abre `index.html` con `?demo` al final de
 la URL: trae datos de mentira repartidos por todo el mes.
 
 Lo que **no** está en este repositorio y vive solo en Google:
@@ -46,6 +46,6 @@ El propio tablero avisa si se te olvida: el JSON devuelve `version` (la publicad
 
 ## Ojo
 
-Este repositorio es **privado** a propósito: `tablero-v2.html` lleva la llave del tablero
+Este repositorio es **privado** a propósito: `index.html` lleva la llave del tablero
 y la URL del endpoint en texto plano. Si algún día se hace público, hay que cambiar la
 llave en las Propiedades del script y en el HTML.
