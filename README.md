@@ -46,6 +46,11 @@ El propio tablero avisa si se te olvida: el JSON devuelve `version` (la publicad
 
 ## Ojo
 
-Este repositorio es **privado** a propósito: `index.html` lleva la llave del tablero
-y la URL del endpoint en texto plano. Si algún día se hace público, hay que cambiar la
-llave en las Propiedades del script y en el HTML.
+`index.html` ya **no lleva ninguna llave**. El televisor le pide los datos al Worker de
+Cloudflare (`worker.js`), y es el Worker quien guarda la llave y se la agrega antes de
+llamar a Apps Script. La llave vive en dos sitios y en ninguno es visible: Propiedades
+del script en Apps Script, y las variables del Worker marcada como *secret*.
+
+Aun así el repositorio sigue siendo **privado**. Y falta lo que de verdad protege los
+datos: cualquiera que descubra la URL del Worker los lee sin llave. Eso se cierra
+poniéndole Cloudflare Access delante, que está pendiente.

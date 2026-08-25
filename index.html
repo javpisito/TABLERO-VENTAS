@@ -321,13 +321,15 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
 const CONFIG = {
   modo: 'api',             // 'demo' para probar · 'api' cuando esté la hoja
 
-  // Tiene que ser la URL que termina en /exec, la de Gestionar implementaciones:
-  //   https://script.google.com/macros/s/AKfycb.../exec
-  // NO la de script.googleusercontent.com/macros/echo?user_content_key=... que
-  // sale en la barra del navegador al abrir el endpoint: esa es la redirección
-  // interna, la llave se vence y el tablero se queda en blanco sin explicar nada.
-  urlDatos: 'https://script.google.com/macros/s/AKfycbwAuMbEmJbKtWTMOGklqhkUuqZWXqLHimuZpXY3rtxwTlwtCZKF0I2SetanPdnkGo7-/exec',
-  llave: 'scads2026tv',    // la misma que guardaste en LLAVE_TABLERO
+  // La URL del Worker de Cloudflare, NO la de Apps Script.
+  //
+  // El Worker es el que guarda la llave: el televisor pide sin ningún secreto,
+  // el Worker se lo agrega y llama a Apps Script. Por eso en este archivo ya no
+  // hay ninguna llave que se pueda leer viendo el código fuente de la página.
+  //
+  // La URL de Apps Script y la llave viven en las variables del Worker
+  // (URL_APPS_SCRIPT y el secreto LLAVE_TABLERO). Ver worker.js.
+  urlDatos: 'https://tablero-datos.javp182005.workers.dev/',
 
   intervaloMs: 60000,      // cada cuánto pregunta por ventas nuevas
   sonidoURL: '',           // mp3 propio; vacío = campana sintetizada
@@ -740,9 +742,10 @@ function enMillones(v){
 /* ================================================================
    DATOS
    ================================================================ */
-function urlConLlave(){
+function urlDeDatos(){
   const sep = CONFIG.urlDatos.includes('?') ? '&' : '?';
-  return CONFIG.urlDatos + sep + 'k=' + encodeURIComponent(CONFIG.llave) + '&t=' + Date.now();
+  // Sin llave: esa la pone el Worker. El t solo sirve para saltarse la caché.
+  return CONFIG.urlDatos + sep + 't=' + Date.now();
 }
 
 /**
@@ -751,20 +754,23 @@ function urlConLlave(){
  */
 function revisarURL(){
   const u = CONFIG.urlDatos.trim();
-  if (!u) return 'Falta pegar la URL /exec del Apps Script en CONFIG.urlDatos';
-  if (u.includes('script.googleusercontent.com'))
-    return 'La URL de CONFIG.urlDatos es la redirección interna de Google y se vence. '
-         + 'Pega la que termina en /exec, de Implementar → Gestionar implementaciones';
-  // Mientras se prueba se usa la implementacion de prueba, que termina en /dev.
-  // Esa solo responde a alguien con acceso al script y con sesion de Google abierta.
-  if (u.endsWith('/dev') || u.endsWith('/exec')) return null;
-  return 'La URL de CONFIG.urlDatos debería terminar en /exec (o en /dev mientras pruebas)';
+  if (!u) return 'Falta pegar la URL del Worker de Cloudflare en CONFIG.urlDatos';
+  // Pegar aquí la URL de Apps Script es el error fácil de cometer al volver a
+  // este archivo meses después. Funcionaría a medias: el tablero pediría sin
+  // llave y Apps Script contestaría error de llave, que apunta al lado
+  // equivocado del problema. Mejor decir exactamente qué pasó.
+  if (u.includes('script.google.com') || u.includes('script.googleusercontent.com'))
+    return 'CONFIG.urlDatos tiene la URL de Apps Script. Desde que existe el Worker '
+         + 'va la de Cloudflare (*.workers.dev): el Worker es quien guarda la llave';
+  if (!u.startsWith('https://'))
+    return 'La URL del Worker en CONFIG.urlDatos debería empezar con https://';
+  return null;
 }
 
 async function traerDatos(){
   if (CONFIG.modo === 'demo') return;
   try{
-    const r = await fetch(urlConLlave(), { redirect:'follow' });
+    const r = await fetch(urlDeDatos(), { redirect:'follow' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     aceptar(await r.json());
   } catch (e){ jsonp(); }   // Apps Script a veces no deja pasar el fetch entre orígenes
@@ -775,7 +781,7 @@ function jsonp(){
   const limpiar = () => { delete window[nombre]; s.remove(); };
   window[nombre] = datos => { aceptar(datos); limpiar(); };
   const s = document.createElement('script');
-  s.src = urlConLlave() + '&callback=' + nombre;
+  s.src = urlDeDatos() + '&callback=' + nombre;
   s.onerror = () => { caida(); limpiar(); };
   document.body.appendChild(s);
   setTimeout(() => { if (window[nombre]){ caida(); limpiar(); } }, 15000);
@@ -806,7 +812,7 @@ function marcarPulso(ok){ $('#pulso').classList.toggle('frio', !ok); }
    ================================================================ */
 const avisosLocales = new Set();
 const AVISO_LATIDO = 'El recolector no está corriendo: los números pueden estar viejos';
-const AVISO_LLAVE  = 'La llave del tablero no coincide con LLAVE_TABLERO';
+const AVISO_LLAVE  = 'El secreto del Worker no coincide con LLAVE_TABLERO en Apps Script';
 const AVISO_RED    = 'Sin conexión con la hoja de cálculo';
 
 function avisar(t, si){

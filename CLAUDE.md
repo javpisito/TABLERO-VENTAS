@@ -36,7 +36,11 @@ español. Es una convención deliberada del proyecto, no un accidente.
         |
         |  doGet() sirve JSON del mes en curso, protegido con una llave
         v
-index.html       (estático, en GitHub Pages, abierto en el TV de la oficina)
+worker.js        (Worker de Cloudflare: es quien guarda la llave y se la agrega)
+        |
+        |  el televisor pide sin ningún secreto
+        v
+index.html       (estático, abierto en el TV de la oficina)
 ```
 
 ## Archivos
@@ -45,6 +49,7 @@ index.html       (estático, en GitHub Pages, abierto en el TV de la oficina)
 |---|---|---|
 | `recolector.js` | Apps Script pegado en la hoja consolidada | Sí, es el backend |
 | `index.html` | La página del televisor, sin dependencias ni build | Sí, es el frontend |
+| `worker.js` | Worker de Cloudflare. Guarda la llave para que no viaje al TV | Sí, se pega en el panel |
 | `consolidado-scads.xlsx` | Plantilla de la hoja consolidada | Solo si cambia el esquema |
 | `plantilla-hoja-cliente.xlsx` | Las dos pestañas que se copian a cada cliente | Solo si cambia el contrato |
 
@@ -258,7 +263,24 @@ funciona. Si una librería parece necesaria, pregunta antes.
 alguien reinicia el TV y eso está bien.
 
 **Los secretos van en Propiedades del script** (`LLAVE_TABLERO`, `META_TOKEN`), nunca en
-el código ni en celdas de la hoja.
+el código ni en celdas de la hoja. Del lado de Cloudflare van en las variables del
+Worker, con `LLAVE_TABLERO` marcada como *secret* y no como texto.
+
+**En `index.html` no va ningún secreto.** El televisor le pide los datos al Worker sin
+llave; el Worker se la agrega y llama a Apps Script. Esto se hizo el 25 de agosto de 2026
+porque la llave viajaba en el HTML y el repo estuvo público un rato: cualquiera con la
+URL leía las ventas del mes.
+
+Un `.env` no habría servido y la pregunta va a volver: un `.env` protege un secreto que
+usa el servidor, y aquí el que pedía era el navegador. Con Vite o Next el build lo
+incrusta igual en el bundle — por algo esas variables se llaman `VITE_*` y
+`NEXT_PUBLIC_*`. Lo único que lo arregla es que el secreto viva en un servidor, y ese
+servidor es `worker.js`.
+
+**El Worker guarda el secreto, no protege los datos.** Quien descubra su URL lee las
+ventas sin llave, y el filtro por `ORIGENES` no lo impide porque un `curl` manda la
+cabecera `Origin` que quiera. Para proteger los datos hace falta autenticación de verdad
+delante — Cloudflare Access — y eso todavía está pendiente.
 
 **Los errores se muestran en pantalla, no se tragan.** Un token vencido tiene que
 aparecer como aviso rojo en el televisor. Un cero silencioso hace que alguien concluya

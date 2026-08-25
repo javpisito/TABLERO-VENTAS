@@ -5,3 +5,6 @@ desktop.ini
 
 # archivos de bloqueo que deja Excel al abrir un .xlsx
 ~$*
+
+# tooling local de sesion, apunta a rutas temporales
+.claude/
