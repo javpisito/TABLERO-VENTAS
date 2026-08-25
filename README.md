@@ -51,6 +51,11 @@ Cloudflare (`worker.js`), y es el Worker quien guarda la llave y se la agrega an
 llamar a Apps Script. La llave vive en dos sitios y en ninguno es visible: Propiedades
 del script en Apps Script, y las variables del Worker marcada como *secret*.
 
-Aun así el repositorio sigue siendo **privado**. Y falta lo que de verdad protege los
-datos: cualquiera que descubra la URL del Worker los lee sin llave. Eso se cierra
-poniéndole Cloudflare Access delante, que está pendiente.
+El repositorio es **público** desde el 25 de agosto de 2026. Se decidió a sabiendas de
+que eso deja a la vista los nombres de los cinco clientes, que además ya estaban en el
+historial desde el primer commit.
+
+Lo que **no** está resuelto: cualquiera que descubra la URL del Worker lee las ventas del
+mes sin llave. El filtro `ORIGENES` es un obstáculo, no una defensa — un `curl` manda la
+cabecera `Origin` que quiera. Cerrarlo de verdad es ponerle Cloudflare Access delante, y
+está pendiente.

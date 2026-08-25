@@ -340,7 +340,8 @@ datos reales y el tablero pintándolos. Los cinco clientes son Dra. Dayan Morion
 Dra. Daniela Correa, Dr. Jacobo Cucalón, Automat Soft y Decotienda; las vendedoras salen
 solas del Registro.
 
-Falta desplegar el HTML en GitHub Pages y abrirlo en el televisor de la oficina.
+El tablero está desplegado en GitHub Pages y sirviendo datos a través del Worker de
+Cloudflare. Falta abrirlo en el televisor de la oficina y ponerle Cloudflare Access.
 
 El esquema es el de seis columnas por cliente y ocho en el `Registro`.
 
@@ -356,17 +357,23 @@ La contra: solo responde a alguien con acceso al script y con sesión de Google 
 que no sirve para el televisor de la oficina, solo para probar desde el portátil del
 analista. `revisarURL()` acepta las dos formas.
 
-Cuando esté al 100% se hacen las dos cosas juntas: subir a GitHub Pages y publicar la
-implementación definitiva con la URL `/exec`. Hasta entonces el proyecto no va a GitHub.
+**El tablero está en vivo** en https://javpisito.github.io/TABLERO-VENTAS/ desde el 25 de
+agosto de 2026, servido por GitHub Pages desde `main`. El repositorio es público, decidido
+a sabiendas de que expone los nombres de los cinco clientes.
 
-La URL que va en `CONFIG.urlDatos` es la que termina en `/exec`, la de Gestionar
-implementaciones. La de `script.googleusercontent.com/macros/echo?user_content_key=…`
-que aparece en la barra del navegador al abrir el endpoint es la redirección interna:
-sirve un rato y después deja el tablero en blanco. `revisarURL()` detecta las tres formas
-de equivocarse y las escribe en la franja roja.
+La URL que va en `CONFIG.urlDatos` es la del **Worker**, no la de Apps Script. La `/exec`
+vive ahora en la variable `URL_APPS_SCRIPT` del Worker, junto con el secreto
+`LLAVE_TABLERO`. `revisarURL()` avisa en la franja roja si alguien vuelve a pegar ahí la
+de Google, que es el error fácil al volver a este archivo dentro de unos meses.
 
-Ojo con la llave: viaja en el HTML estático, así que cualquiera con la URL de GitHub Pages
-puede leer las ventas del mes. Es inherente a no tener backend.
+Sigue valiendo lo de Apps Script: la `/exec` sirve la versión **publicada**, así que cada
+cambio en `recolector.js` necesita publicar versión nueva. Y sigue existiendo la de prueba
+que termina en `/dev`, útil para probar el recolector desde el portátil.
+
+Ojo con lo que el Worker **no** resuelve: guarda la llave, pero no protege los datos.
+Quien descubra la URL del Worker lee las ventas del mes sin necesitar nada. El filtro
+`ORIGENES` frena al JavaScript de otra página, no a un `curl` que mande el `Origin` que
+se le antoje. Lo que lo cierra es Cloudflare Access, y está pendiente.
 
 Para revisar el tablero en un portátil sin tocar el archivo, se abre con `?demo` al final
 de la URL. El modo demo trae metas de mentira para poder ver las barras de avance.
