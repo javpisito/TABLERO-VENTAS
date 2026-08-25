@@ -127,13 +127,26 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .nb{display:flex;flex-direction:column;gap:.38rem;min-width:0}
 .fila .nombre{font-size:1.25rem;font-weight:800;font-variation-settings:'wdth' 112;
   text-transform:uppercase;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.barra{height:.34rem;background:#E3EAF6;border-radius:999px;overflow:hidden}
+/* La barra va de 0 a la meta de esa vendedora. El tramo sólido es lo facturado
+   y el claro es lo que falta por hacerse efectivo: el mismo lenguaje de la
+   gráfica del mes, donde lo facturado va por dentro de lo proyectado. */
+.barra{height:.34rem;background:#E3EAF6;border-radius:999px;overflow:hidden;display:flex}
 .fila.lider .barra{background:rgba(255,255,255,.28)}
-.barra i{display:block;height:100%;width:0;background:var(--azul);border-radius:999px;
+.barra i{display:block;height:100%;width:0;
   transition:width .9s cubic-bezier(.2,.8,.2,1)}
-.fila.lider .barra i{background:#fff}
+.barra .hecho{background:var(--azul)}
+.barra .porvenir{background:#BFD3FF}
+.barra.cumplida .hecho{background:var(--azul-fuerte)}
+.fila.lider .barra .hecho{background:#fff}
+.fila.lider .barra .porvenir{background:rgba(255,255,255,.45)}
 .fila .cierres{font-family:'Martian Mono',monospace;font-size:.58rem;color:var(--humo);letter-spacing:.06em}
 .fila.lider .cierres{color:rgba(255,255,255,.82)}
+/* El número grande decía proyectado y el subtítulo decía facturado, sin que
+   nada lo dijera: por eso se confundían. Ahora cada cifra lleva su rótulo. */
+.fila .der{display:flex;flex-direction:column;align-items:flex-end;gap:.1rem}
+.fila .rot{font-family:'Martian Mono',monospace;font-size:.5rem;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--humo)}
+.fila.lider .rot{color:rgba(255,255,255,.72)}
 .fila .monto{justify-self:end;font-weight:700;font-size:.92rem;white-space:nowrap}
 
 #vacio{color:var(--humo);font-size:.95rem;line-height:1.6}
@@ -336,6 +349,17 @@ const CONFIG = {
   duracionFiestaMs: 6500,
   minutosSinLatido: 6,     // si el recolector no late en este rato, sale aviso rojo
   maxDeGolpe: 4,           // más ventas nuevas que esto en una sola pasada = carga masiva, no suena
+
+  // Metas del mes por vendedora. PROVISIONAL: esto debería vivir en la hoja,
+  // como las metas de cliente, para que cambiarlas no sea tocar código. Mientras
+  // el recolector no las mande, van aquí. Si el JSON trae metaMes, ese gana.
+  // Quien no aparezca queda sin barra, que es más honesto que inventarle una meta.
+  metasVendedoras: {
+    'Laura':     50000000,
+    'Manuela':   30000000,
+    'Alejandra': 20000000,
+    'Susana':    30000000
+  },
   horaRecarga: 4           // recarga sola a esta hora, para que el TV no lleve semanas abierto
 };
 
@@ -507,7 +531,6 @@ function dibujar(){
   [...cont.children].forEach(el => antes.set(el.dataset.quien, el.getBoundingClientRect().top));
   // Lo facturado ya está adentro de lo proyectado: sumarlos contaría dos veces la
   // misma plata. El ranking va por el total del mes de cada una.
-  const tope = orden.length ? orden[0].proyectado || 1 : 1;
   const vistos = new Set();
 
   orden.forEach((v, i) => {
@@ -517,16 +540,32 @@ function dibujar(){
       fila.className = 'fila';
       fila.dataset.quien = v.vendedora;
       fila.innerHTML = `<div class="puesto"></div>
-        <div class="nb"><div class="nombre"></div><div class="barra"><i></i></div><div class="cierres"></div></div>
-        <div class="flap monto"></div>`;
+        <div class="nb"><div class="nombre"></div>
+          <div class="barra"><i class="hecho"></i><i class="porvenir"></i></div>
+          <div class="cierres"></div></div>
+        <div class="der"><div class="rot">proyectado</div><div class="flap monto"></div></div>`;
       cont.appendChild(fila);
     }
     vistos.add(v.vendedora);
     fila.querySelector('.puesto').textContent = String(i + 1).padStart(2, '0');
     fila.querySelector('.nombre').textContent = v.vendedora;
-    fila.querySelector('.barra i').style.width = Math.max(3, (v.proyectado / tope) * 100) + '%';
-    fila.querySelector('.cierres').textContent =
-      v.ventas + (v.ventas === 1 ? ' venta' : ' ventas') + ' · ' + pesos.format(v.facturado) + ' facturado';
+    // La barra va de cero a la meta de ESA vendedora. Antes medía contra la
+    // proyección de la líder, así que la primera salía siempre llena y la barra
+    // no decía nada que el orden de las filas no dijera ya.
+    const meta = metaDe(v);
+    const barra = fila.querySelector('.barra');
+    const hecho = meta > 0 ? Math.min(100, (v.facturado / meta) * 100) : 0;
+    const falta = meta > 0 ? Math.min(100 - hecho, ((v.proyectado - v.facturado) / meta) * 100) : 0;
+    barra.style.visibility = meta > 0 ? 'visible' : 'hidden';
+    barra.classList.toggle('cumplida', meta > 0 && v.facturado >= meta);
+    barra.querySelector('.hecho').style.width = hecho + '%';
+    barra.querySelector('.porvenir').style.width = Math.max(0, falta) + '%';
+
+    fila.querySelector('.cierres').textContent = [
+      v.ventas + (v.ventas === 1 ? ' venta' : ' ventas'),
+      pesos.format(v.facturado) + ' facturado',
+      meta > 0 ? Math.round((v.facturado / meta) * 100) + '% de meta' : 'sin meta'
+    ].join(' · ');
     pintarFlap(fila.querySelector('.monto'), pesos.format(v.proyectado));
     encajarCifra(fila.querySelector('.monto'));
     fila.classList.toggle('lider', i === 0);
@@ -554,6 +593,24 @@ function dibujar(){
  * La barra mide facturado contra meta_mes. Solo facturado: el proyectado no se le
  * suma, sumarlos daría un avance que no existe.
  */
+/**
+ * La meta del mes de una vendedora.
+ *
+ * Prefiere lo que mande el servidor: el día que el recolector incluya metaMes
+ * dentro de vendedoras[], mover las metas a la hoja no obliga a tocar este
+ * archivo, y CONFIG.metasVendedoras se puede borrar sin más.
+ *
+ * La comparación de nombres ignora mayúsculas y espacios sobrantes porque los
+ * nombres se escriben a mano en la hoja, igual que pasó con los estados.
+ */
+function metaDe(v){
+  if (Number(v.metaMes) > 0) return Number(v.metaMes);
+  const buscado = String(v.vendedora || '').trim().toLowerCase();
+  const clave = Object.keys(CONFIG.metasVendedoras)
+    .find(k => k.trim().toLowerCase() === buscado);
+  return clave ? Number(CONFIG.metasVendedoras[clave]) || 0 : 0;
+}
+
 function pintarClientes(clientes){
   const ul = $('#clientes');
   const vistos = new Set();
