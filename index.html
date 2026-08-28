@@ -18,7 +18,17 @@
   --radio:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{font-size:clamp(9px,0.75vw,24px); background:var(--papel)}
+/* La base manda todo el tablero, porque cada tamaño está en rem.
+ *
+ * Escalaba solo con el ancho (0.75vw), y eso se rompe en una pantalla ancha y
+ * bajita. El PC del televisor reporta 1476x597: con 0.75vw la base sale en 11px,
+ * que para 597 de alto es demasiado, y el panel de vendedoras recortaba filas
+ * en silencio — la peor forma de fallar, porque nadie se entera.
+ *
+ * Ahora manda la dimensión más apretada de las dos. El tablero tiene que caber
+ * en una pantalla sin scroll, así que el alto restringe tanto como el ancho.
+ */
+html{font-size:clamp(8px,min(0.75vw,1.35vh),24px); background:var(--papel)}
 body{
   min-height:100vh; color:var(--tinta); overflow:hidden; background:var(--papel);
   font-family:'Archivo',system-ui,sans-serif; font-variation-settings:'wdth' 100;
