@@ -15,22 +15,51 @@ $ErrorActionPreference = 'Continue'
 $raiz = $PSScriptRoot
 $puerto = 8765
 
+# Se intenta escuchar en todas las interfaces, para que el televisor y los
+# celulares del equipo puedan entrar desde la misma red. Windows exige un
+# permiso para eso (ver README); si no está dado, esto falla y se cae a servir
+# solo en esta máquina, que es mejor que no arrancar.
+$enRed = $true
 $lis = New-Object System.Net.HttpListener
-$lis.Prefixes.Add("http://localhost:$puerto/")
+$lis.Prefixes.Add("http://+:$puerto/")
 try {
   $lis.Start()
 } catch {
-  Write-Host "No se pudo abrir el puerto $puerto. Puede que ya haya un tablero corriendo."
-  Write-Host $_.Exception.Message
-  Read-Host "Enter para cerrar"
-  exit 1
+  $enRed = $false
+  $lis = New-Object System.Net.HttpListener
+  $lis.Prefixes.Add("http://localhost:$puerto/")
+  try {
+    $lis.Start()
+  } catch {
+    Write-Host "No se pudo abrir el puerto $puerto. Puede que ya haya un tablero corriendo."
+    Write-Host $_.Exception.Message
+    Read-Host "Enter para cerrar"
+    exit 1
+  }
 }
 
 Write-Host ""
 Write-Host "  Tablero sirviendose desde: $raiz"
-Write-Host "  Abrilo en:                 http://localhost:$puerto/"
+Write-Host "  En esta maquina:           http://localhost:$puerto/"
+
+if ($enRed) {
+  $ips = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+         Where-Object { $_.IPAddress -notmatch '^(127\.|169\.254\.)' } |
+         Select-Object -ExpandProperty IPAddress
+  foreach ($ip in $ips) {
+    Write-Host "  Desde otro aparato:        http://${ip}:$puerto/"
+  }
+  Write-Host ""
+  Write-Host "  Esas direcciones sirven solo dentro de tu misma red."
+} else {
+  Write-Host ""
+  Write-Host "  Solo esta maquina puede verlo: falta el permiso de red."
+  Write-Host "  Para abrirlo al resto de la red, mira la seccion 'Verlo desde otro"
+  Write-Host "  aparato' del README. Son dos comandos, una sola vez."
+}
+
 Write-Host ""
-Write-Host "  Dejá esta ventana abierta. Cerrarla apaga el tablero."
+Write-Host "  Deja esta ventana abierta. Cerrarla apaga el tablero."
 Write-Host ""
 
 Start-Process "http://localhost:$puerto/"

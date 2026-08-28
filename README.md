@@ -36,6 +36,42 @@ Lo que **no** está en este repositorio y vive solo en Google:
 - El proyecto de Apps Script publicado (la URL `/exec` que está en `CONFIG.urlDatos`)
 - Las Propiedades del script: `LLAVE_TABLERO` y, cuando se conecte Meta, `META_TOKEN`
 
+## Dónde verlo
+
+Hay dos versiones del mismo archivo, y la diferencia son las canciones.
+
+| | URL | Canciones |
+|---|---|---|
+| Pública | https://javpisito.github.io/TABLERO-VENTAS/ | no |
+| Local | doble clic en `tablero.bat` | sí |
+
+La pública la abre cualquiera desde cualquier parte, sin que tengas nada prendido.
+No suena música porque `audio/` no está en el repositorio, a propósito.
+
+## Verlo desde otro aparato de la misma red
+
+El servidor local intenta escuchar en toda la red, pero Windows pide permiso para
+eso. Sin el permiso solo funciona en la máquina que lo corre, y `tablero.bat` lo
+dice al arrancar.
+
+Se da una sola vez, en **PowerShell como administrador**:
+
+```
+netsh http add urlacl url=http://+:8765/ user=%USERNAME%
+netsh advfirewall firewall add rule name="Tablero SC Ads" dir=in action=allow protocol=TCP localport=8765
+```
+
+El primero autoriza a abrir el puerto para toda la red; el segundo le dice al
+firewall que deje entrar. Después, `tablero.bat` imprime la dirección que hay que
+abrir en los otros aparatos, del estilo `http://192.168.1.15:8765/`.
+
+Esa dirección sirve solo dentro de tu red: desde fuera de la oficina no se ve.
+
+**Y ojo con el Worker:** si le pusiste valor a `ORIGENES`, hay que agregar ahí ese
+mismo origen (`http://192.168.1.15:8765`) o el tablero cargará sin cifras. Como la
+IP de la máquina puede cambiar, conviene fijarla en el router si esto va a quedar
+funcionando.
+
 ## Al cambiar el recolector
 
 Subir `VERSION`, pegar en el editor, guardar y **publicar una versión nueva** desde
