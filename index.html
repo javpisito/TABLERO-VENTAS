@@ -18,7 +18,7 @@
   --radio:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{font-size:clamp(9px,0.84vw,24px); background:var(--papel)}
+html{font-size:clamp(9px,0.75vw,24px); background:var(--papel)}
 body{
   min-height:100vh; color:var(--tinta); overflow:hidden; background:var(--papel);
   font-family:'Archivo',system-ui,sans-serif; font-variation-settings:'wdth' 100;
@@ -70,9 +70,15 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
   border-left:4px solid var(--senal);border-radius:10px;font-size:.82rem;color:#991B1B}
 #avisos.hay{display:block}
 
-#tablero{height:100vh;display:grid;
+#tablero{height:100vh;overflow:hidden;display:grid;
   grid-template-rows:auto auto auto minmax(0,1fr) minmax(0,.46fr);
   padding:1.4rem 1.7rem 1rem;gap:.95rem}
+
+#tablero > header { grid-row: 1; }
+#tablero > #avisos { grid-row: 2; }
+#tablero > .kpis { grid-row: 3; }
+#tablero > .cuerpo { grid-row: 4; }
+#tablero > .panel { grid-row: 5; }
 
 .panel{background:var(--tarjeta);border:1px solid var(--linea);border-radius:var(--radio);
   box-shadow:var(--sombra);padding:1rem 1.15rem;display:flex;flex-direction:column;min-height:0}
@@ -170,8 +176,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 #clientes .detalle b{color:var(--tinta-2);font-weight:700}
 #clientes .detalle .cumplida b{color:var(--azul)}
 
-@media (max-width:1100px){
-  html{font-size:14px}
+@media (max-width:800px){
+  html{font-size:10px}
   body{overflow:auto}
   #tablero{height:auto;min-height:100vh;padding:1.1rem;grid-template-rows:none}
   .kpis{grid-template-columns:repeat(2,1fr)}
