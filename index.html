@@ -176,18 +176,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 #clientes .detalle b{color:var(--tinta-2);font-weight:700}
 #clientes .detalle .cumplida b{color:var(--azul)}
 
-@media (max-width:800px){
-  html{font-size:10px}
-  body{overflow:auto}
-  #tablero{height:auto;min-height:100vh;padding:1.1rem;grid-template-rows:none}
-  .kpis{grid-template-columns:repeat(2,1fr)}
-  .cuerpo{grid-template-columns:1fr}
-  #grafico{height:16rem}
-  #clientes{grid-auto-flow:row;grid-auto-columns:auto}
-  header{flex-direction:column;align-items:flex-start;gap:.7rem}
-  footer{display:none}
-}
-
 .flap{display:inline-flex;flex-wrap:nowrap;white-space:nowrap;gap:.08em;
   font-family:'Martian Mono',monospace;font-weight:700}
 .flap .ficha{position:relative;display:inline-block;perspective:200px;line-height:1.12}
@@ -237,12 +225,29 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monospace;
   font-size:.58rem;letter-spacing:.2em;color:#B4C0D2;text-transform:uppercase}
 
-@media (max-width:900px){
+/* El apilado es para un celular en vertical, no para una pantalla chica.
+ *
+ * Antes había dos bloques, uno a 800px y otro a 900px. El de 900px iba después
+ * y le ganaba en todo lo que el otro cubría, así que el de 800px era código
+ * muerto: se leía como si hiciera algo y no hacía nada.
+ *
+ * Y cortar solo por ancho no sirve para el televisor: el de la oficina reporta
+ * 960px de viewport y sigue siendo una pantalla de 55 pulgadas. Si algún día
+ * reporta menos, el tablero tiene que encogerse, nunca apilarse, porque en un
+ * TV no hay quien haga scroll y lo de abajo simplemente no existe. Por eso la
+ * condición incluye la orientación: un televisor siempre es horizontal.
+ */
+@media (max-width:900px) and (orientation:portrait){
   html{font-size:14px}
   body{overflow:auto}
-  #tablero{height:auto;min-height:100vh;padding:1.2rem}
+  #tablero{height:auto;min-height:100vh;padding:1.2rem;grid-template-rows:none}
+  /* Sin filas explícitas, las secciones no pueden seguir clavadas a su fila:
+     quedarían huecos donde antes estaban las filas 1 a 3. */
+  #tablero > *{grid-row:auto}
   .kpis{grid-template-columns:1fr}
   .cuerpo{grid-template-columns:1fr;gap:2rem}
+  #grafico{height:16rem}
+  #clientes{grid-auto-flow:row;grid-auto-columns:auto}
   header{flex-direction:column;align-items:flex-start;gap:.8rem}
   footer{display:none}
 }
@@ -1089,7 +1094,15 @@ async function mantenerDespierta(){
 function recargaDeMadrugada(){
   setInterval(() => {
     const h = new Date();
-    if (h.getHours() === CONFIG.horaRecarga && h.getMinutes() < 5) location.reload();
+    if (h.getHours() !== CONFIG.horaRecarga || h.getMinutes() >= 5) return;
+    // location.reload() puede servirse de la caché, y los navegadores de
+    // televisor guardan el HTML por días: el tablero se queda mostrando una
+    // versión vieja con cara de estar al día, que es justo lo que pasó el
+    // 28 de agosto de 2026. Cambiar la URL obliga a pedirlo de nuevo.
+    // Se conservan los parámetros que ya venían, como ?demo.
+    const u = new URL(location.href);
+    u.searchParams.set('v', Date.now());
+    location.replace(u.toString());
   }, 240000);
 }
 
