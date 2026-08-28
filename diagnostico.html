@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnóstico · Tablero SC Ads</title>
+<!--
+  Página desechable. Existe para que el televisor diga sus propios números en vez
+  de que alguien los deduzca desde una foto. Se abre en el TV, se le toma una
+  foto y se borra este archivo.
+
+  Todo va en tamaños grandes y en px fijos, a propósito: si el problema es el
+  escalado, una página que también escala no sirve para medirlo.
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0B1B33;color:#fff;font-family:monospace;padding:24px;
+       font-size:26px;line-height:1.45}
+  h1{font-size:30px;color:#93B4FF;margin-bottom:16px;letter-spacing:.1em}
+  table{border-collapse:collapse;width:100%}
+  td{padding:8px 10px;border-bottom:1px solid #1E3A6B;vertical-align:top}
+  td:first-child{color:#93B4FF;white-space:nowrap;padding-right:24px}
+  b{font-size:44px;color:#fff}
+  .ok{color:#4ADE80}
+  .mal{color:#F87171}
+  #ua{font-size:16px;color:#7A8AA3;margin-top:16px;word-break:break-all}
+</style>
+</head>
+<body>
+
+<h1>DIAGNÓSTICO DEL TELEVISOR</h1>
+
+<table>
+  <tr><td>Viewport CSS</td><td><b id="vp">—</b></td></tr>
+  <tr><td>Pantalla</td><td id="scr">—</td></tr>
+  <tr><td>devicePixelRatio</td><td id="dpr">—</td></tr>
+  <tr><td>Fuente base</td><td id="fuente">—</td></tr>
+  <tr><td>Se apilaría</td><td id="apila">—</td></tr>
+  <tr><td>Orientación</td><td id="orient">—</td></tr>
+  <tr><td>Worker</td><td id="red">probando…</td></tr>
+</table>
+
+<div id="ua">—</div>
+
+<script>
+var $ = function(s){ return document.querySelector(s); };
+
+function pintar(){
+  $('#vp').textContent  = window.innerWidth + ' x ' + window.innerHeight;
+  $('#scr').textContent = screen.width + ' x ' + screen.height;
+  $('#dpr').textContent = window.devicePixelRatio;
+  $('#fuente').textContent = getComputedStyle(document.documentElement).fontSize;
+
+  var apila = window.matchMedia('(max-width:900px) and (orientation:portrait)').matches;
+  var e = $('#apila');
+  e.textContent = apila ? 'SÍ — layout de celular' : 'NO — layout de televisor';
+  e.className = apila ? 'mal' : 'ok';
+
+  $('#orient').textContent =
+    window.matchMedia('(orientation:portrait)').matches ? 'vertical' : 'horizontal';
+
+  $('#ua').textContent = navigator.userAgent;
+}
+pintar();
+window.addEventListener('resize', pintar);
+
+// Prueba de red real: si esto falla, el "Sin conexión" del tablero no es un bug
+// del tablero. Se usa el mismo Worker que usa el tablero de verdad.
+var WORKER = 'https://tablero-datos.javp182005.workers.dev/';
+var red = $('#red');
+
+function marcar(texto, bien){
+  red.textContent = texto;
+  red.className = bien ? 'ok' : 'mal';
+}
+
+try {
+  fetch(WORKER + '?t=' + Date.now())
+    .then(function(r){ return r.ok ? r.json() : Promise.reject('HTTP ' + r.status); })
+    .then(function(d){
+      marcar('OK · ' + d.mes + ' · ' + (d.ventas ? d.ventas.length : 0) + ' ventas', true);
+    })
+    .catch(function(err){ marcar('FALLA: ' + err, false); });
+} catch (err) {
+  marcar('este navegador no tiene fetch: ' + err, false);
+}
+</script>
+
+</body>
+</html>
