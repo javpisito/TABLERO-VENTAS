@@ -210,7 +210,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 #propaganda.viva{display:block}
 #propaganda .tira{display:flex;height:100%;width:100%;
   transition:transform .7s cubic-bezier(.2,.8,.2,1)}
-#propaganda .lamina{flex:0 0 100%;height:100%;display:grid;place-items:center;padding:2vh 2vw}
+/* Sin padding: la propaganda sangra hasta el borde. El contain ya evita que la
+   imagen se deforme, así que el margen solo restaba pantalla. */
+#propaganda .lamina{flex:0 0 100%;height:100%;display:grid;place-items:center}
 /* contain y no cover: una pieza recortada por la mitad se ve como un error,
    no como diseño. Que sobre fondo antes que perder parte de la imagen. */
 #propaganda img{max-width:100%;max-height:100%;object-fit:contain;display:block}
@@ -1222,7 +1224,7 @@ function recargaDeMadrugada(){
   }, 240000);
 }
 
-$('#encender').addEventListener('click', () => {
+function encender(){
   document.body.classList.add('encendido');
   abrirAudio();
   document.documentElement.requestFullscreen?.().catch(()=>{});
@@ -1248,7 +1250,24 @@ $('#encender').addEventListener('click', () => {
 
   traerDatos();
   setInterval(traerDatos, CONFIG.intervaloMs);
-});
+}
+
+$('#encender').addEventListener('click', encender);
+
+/**
+ * Con ?auto el tablero arranca solo, sin esperar el clic.
+ *
+ * Existe por la recarga de madrugada: al recargarse vuelve a salir la pantalla
+ * de encendido, y a las 4am no hay nadie para presionarla — el televisor
+ * amanecía mostrando el botón en vez de las ventas. Como la recarga conserva
+ * los parámetros, ?auto sobrevive a la recarga y el TV se recupera solo.
+ *
+ * La contra es el audio: el navegador no deja sonar nada sin una interacción
+ * previa, así que sin clic la campana queda muda. Por eso tv.bat abre Chrome
+ * con --autoplay-policy=no-user-gesture-required, que levanta ese bloqueo.
+ * Fuera del televisor, ?auto deja el tablero mudo y eso está bien.
+ */
+if (location.search.indexOf('auto') !== -1) encender();
 </script>
 </body>
 </html>

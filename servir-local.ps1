@@ -11,6 +11,13 @@
 # trata ese origen distinto y no está probado. Este servidor deja el tablero en
 # http://localhost:8765, que es un origen normal y se comporta como la web.
 
+param(
+  # tv.bat abre Chrome en modo kiosco por su cuenta. Si el servidor además
+  # abriera el navegador por defecto, quedarían dos ventanas y la de kiosco
+  # atrás. Con esto el .bat manda.
+  [switch]$SinNavegador
+)
+
 $ErrorActionPreference = 'Continue'
 $raiz = $PSScriptRoot
 $puerto = 8765
@@ -62,7 +69,7 @@ Write-Host ""
 Write-Host "  Deja esta ventana abierta. Cerrarla apaga el tablero."
 Write-Host ""
 
-Start-Process "http://localhost:$puerto/"
+if (-not $SinNavegador) { Start-Process "http://localhost:$puerto/" }
 
 $tipos = @{
   '.html' = 'text/html; charset=utf-8'
