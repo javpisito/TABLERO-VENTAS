@@ -201,6 +201,20 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 @keyframes cae{from{transform:rotateX(0)}to{transform:rotateX(-92deg);opacity:.15}}
 @keyframes sube{from{transform:rotateX(88deg);opacity:.15}to{transform:rotateX(0);opacity:1}}
 
+/* ── Propaganda ──────────────────────────────────────────────────────────
+   Toma la pantalla completa cada tantos minutos y pasa las láminas. Va en
+   z-index 60, debajo de la celebración: si entra una venta mientras corre, la
+   venta manda y esto se cierra. */
+#propaganda{position:fixed;inset:0;z-index:60;display:none;overflow:hidden;
+  background:var(--tinta)}
+#propaganda.viva{display:block}
+#propaganda .tira{display:flex;height:100%;width:100%;
+  transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+#propaganda .lamina{flex:0 0 100%;height:100%;display:grid;place-items:center;padding:2vh 2vw}
+/* contain y no cover: una pieza recortada por la mitad se ve como un error,
+   no como diseño. Que sobre fondo antes que perder parte de la imagen. */
+#propaganda img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+
 #fiesta{position:fixed;inset:0;z-index:70;display:none;background:var(--azul);color:#fff;
   place-content:center;justify-items:center;text-align:center;padding:4vh 6vw;gap:1rem}
 #fiesta.viva{display:grid;animation:golpe .45s cubic-bezier(.2,1.4,.4,1) both}
@@ -338,6 +352,10 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
   </section>
 </div>
 
+<!-- Propaganda. Va por debajo de #fiesta a propósito: si por lo que sea las dos
+     quedaran vivas, la venta gana. La campana es el corazón de esta pantalla. -->
+<div id="propaganda" aria-hidden="true"><div class="tira"></div></div>
+
 <div id="fiesta" role="status">
   <div class="grito" id="fiestaGrito">Venta</div>
   <div class="quien" id="fiestaQuien">—</div>
@@ -346,7 +364,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
 </div>
 <div id="papelitos"></div>
 
-<footer>T · venta de prueba &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
+<footer>T · venta de prueba &nbsp;|&nbsp; P · propaganda &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
 
 <script>
 /* ================================================================
@@ -364,6 +382,25 @@ const CONFIG = {
   // La URL de Apps Script y la llave viven en las variables del Worker
   // (URL_APPS_SCRIPT y el secreto LLAVE_TABLERO). Ver worker.js.
   urlDatos: 'https://tablero-datos.javp182005.workers.dev/',
+
+  // Propaganda a pantalla completa. Las piezas van en propaganda/ y SÍ entran al
+  // repositorio, al revés que las canciones: son material publicitario, hecho
+  // para que lo vean. Como el repo es público, quedan públicas — que es
+  // justamente lo que se quiere de una propaganda.
+  //
+  // El orden de esta lista es el orden en que se pasan. Una imagen que no cargue
+  // se descarta sola, así que se puede quitar el archivo sin tocar el código.
+  propaganda: [
+    'propaganda/1.jpg',
+    'propaganda/2.jpg',
+    'propaganda/3.jpg'
+  ],
+  // Cada cuánto arranca una ronda. Se dejó en 5 minutos por pedido del analista,
+  // sabiendo que en una jornada de 8 horas son casi cien veces tapando las
+  // cifras. Si el equipo empieza a ignorar la pantalla, este número es el
+  // primero que hay que subir.
+  propagandaCadaMs: 300000,
+  propagandaPorLaminaMs: 6000,   // cuánto se queda cada lámina en pantalla
 
   intervaloMs: 60000,      // cada cuánto pregunta por ventas nuevas
   sonidoURL: '',           // mp3 para todas; vacío = campana sintetizada
@@ -555,7 +592,75 @@ function recibir(datos){
   if (estado.cola.length) siguienteFiesta(); else dibujar();
 }
 
+/* ================================================================
+   PROPAGANDA
+   ================================================================ */
+let propagandaLaminas = [];   // huecos donde la imagen no cargó
+let propagandaViva = false;
+let propagandaReloj = null;
+
+/**
+ * Se precargan al encender, no al mostrarlas. Una imagen que no exista se
+ * descarta acá y no en mitad de la ronda: una lámina en blanco a pantalla
+ * completa se lee como que el tablero se rompió.
+ */
+function prepararPropaganda(){
+  propagandaLaminas = [];
+  (CONFIG.propaganda || []).forEach((ruta, i) => {
+    const img = new Image();
+    // El índice conserva el orden de CONFIG aunque carguen desordenadas.
+    img.addEventListener('load', () => { propagandaLaminas[i] = ruta; });
+    img.src = ruta;
+  });
+}
+
+function arrancarPropaganda(){
+  if (!(CONFIG.propaganda || []).length) return;
+  prepararPropaganda();
+  setInterval(intentarPropaganda, CONFIG.propagandaCadaMs);
+}
+
+function intentarPropaganda(){
+  // La venta manda. Si hay una celebración corriendo o esperando en la cola,
+  // esta ronda se salta entera en vez de encimarse; vuelve en el próximo turno.
+  if (estado.celebrando || estado.cola.length) return;
+  const laminas = propagandaLaminas.filter(Boolean);
+  if (laminas.length) correrPropaganda(laminas);
+}
+
+function correrPropaganda(laminas){
+  const caja = $('#propaganda'), tira = caja.querySelector('.tira');
+  tira.innerHTML = laminas.map(r => '<div class="lamina"><img src="' + r + '" alt=""></div>').join('');
+
+  tira.style.transition = 'none';
+  tira.style.transform = 'translateX(0)';
+  void tira.offsetWidth;   // fuerza el reflow: sin esto la primera lámina entra
+                           // deslizándose desde donde quedó la ronda anterior
+  tira.style.transition = '';
+
+  caja.classList.add('viva');
+  propagandaViva = true;
+
+  let i = 0;
+  const paso = () => {
+    i++;
+    if (i >= laminas.length){ cerrarPropaganda(); return; }
+    tira.style.transform = 'translateX(-' + (i * 100) + '%)';
+    propagandaReloj = setTimeout(paso, CONFIG.propagandaPorLaminaMs);
+  };
+  propagandaReloj = setTimeout(paso, CONFIG.propagandaPorLaminaMs);
+}
+
+function cerrarPropaganda(){
+  if (propagandaReloj){ clearTimeout(propagandaReloj); propagandaReloj = null; }
+  if (!propagandaViva) return;
+  $('#propaganda').classList.remove('viva');
+  propagandaViva = false;
+}
+
 function siguienteFiesta(){
+  // Si entró una venta mientras corría la propaganda, la propaganda se va.
+  cerrarPropaganda();
   if (estado.celebrando) return;
   const v = estado.cola.shift();
   if (!v){ dibujar(); return; }
@@ -1076,6 +1181,7 @@ document.addEventListener('keydown', e => {
     else { estado.cola.push(ventaDemo(true)); siguienteFiesta(); }
   }
   if (k === "m"){ silencio = !silencio; if (silencio) callar(); }
+  if (k === "p") intentarPropaganda();   // ver la propaganda sin esperar el turno
   if (k === 'f'){
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen().catch(()=>{});
@@ -1122,6 +1228,7 @@ $('#encender').addEventListener('click', () => {
   document.documentElement.requestFullscreen?.().catch(()=>{});
   mantenerDespierta();
   recargaDeMadrugada();
+  arrancarPropaganda();
   reloj(); setInterval(reloj, 20000);
   ['#kFacturado','#kProyectado','#kInversion'].forEach(s => pintarFlap($(s), pesos.format(0)));
   pintarFlap($('#kVentas'), '0');

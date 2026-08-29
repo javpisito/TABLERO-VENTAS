@@ -74,6 +74,12 @@ $tipos = @{
   '.wav'  = 'audio/wav'
   '.ogg'  = 'audio/ogg'
   '.m4a'  = 'audio/mp4'
+  '.jpg'  = 'image/jpeg'
+  '.jpeg' = 'image/jpeg'
+  '.png'  = 'image/png'
+  '.gif'  = 'image/gif'
+  '.webp' = 'image/webp'
+  '.avif' = 'image/avif'
 }
 
 while ($lis.IsListening) {

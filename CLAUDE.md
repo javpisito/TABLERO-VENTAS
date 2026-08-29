@@ -52,6 +52,7 @@ index.html       (estático, abierto en el TV de la oficina)
 | `worker.js` | Worker de Cloudflare. Guarda la llave para que no viaje al TV | Sí, se pega en el panel |
 | `servir-local.ps1` | Servidor del televisor, para que suenen las canciones | Rara vez |
 | `tablero.bat` | Doble clic que lanza lo anterior | No |
+| `propaganda/` | Las láminas que se pasan a pantalla completa | Sí, ahí van las piezas |
 | `consolidado-scads.xlsx` | Plantilla de la hoja consolidada | Solo si cambia el esquema |
 | `plantilla-hoja-cliente.xlsx` | Las dos pestañas que se copian a cada cliente | Solo si cambia el contrato |
 
@@ -118,6 +119,25 @@ las canciones. No hay bifurcación en el código — el 404 *es* el mecanismo.
 Los clips van de 5 a 8 segundos. Lo que siga sonando cuando termina la fiesta se corta con
 `callar()`: un clip largo se quedaría sonando encima del tablero ya cerrado, y dos ventas
 seguidas se encimarían.
+
+**La propaganda tapa la pantalla, pero nunca le gana a una venta.** Cada
+`propagandaCadaMs` sale una ronda de láminas a pantalla completa. Si hay una
+celebración corriendo o esperando en la cola, la ronda se salta entera; si entra
+una venta mientras la propaganda corre, la propaganda se cierra y la venta toma
+la pantalla. La campana es el corazón de este tablero y no se negocia.
+
+Va en `z-index: 60`, debajo de `#fiesta` que está en 70: si algún día la lógica
+falla, la venta gana igual por CSS.
+
+Las piezas van en `propaganda/` y **sí entran al repositorio**, al revés que las
+canciones: son material publicitario, hecho para que lo vean. Una imagen que no
+cargue se descarta al precargar, no en mitad de la ronda — una lámina en blanco a
+pantalla completa se lee como que el tablero se rompió.
+
+El intervalo quedó en 5 minutos por pedido del analista el 29 de agosto de 2026,
+con la advertencia dicha: en una jornada de 8 horas son casi cien veces tapando
+las cifras, y una pantalla de trabajo que interrumpe tanto se deja de mirar. Es
+una sola variable de `CONFIG`, así que subirlo a 15 o 30 no es tocar código.
 
 **La barra de la vendedora mide contra su meta, no contra la líder.** Medía `proyectado`
 sobre la proyección de la primera del ranking, así que la líder salía llena por definición
