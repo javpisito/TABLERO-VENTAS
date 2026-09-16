@@ -11,11 +11,22 @@
 :root{
   /* Paleta SC Ads. El azul es el de la marca; el rojo solo para avisos. */
   --tinta:#0B1B33; --tinta-2:#33425C; --humo:#7A8AA3;
-  --papel:#F4F7FC; --tarjeta:#FFFFFF; --linea:#E3E9F3;
+  /* El papel bajó un punto: la sombra clara de abajo necesita un fondo apenas
+     más oscuro que el blanco para poder verse. Sin eso, el relieve no existe. */
+  --papel:#EEF2F9; --tarjeta:#FFFFFF; --linea:#E3E9F3;
   --azul:#2563EB; --azul-fuerte:#1D4ED8; --azul-suave:#EEF3FF;
   --senal:#DC2626;
-  --sombra:0 1px 2px rgba(11,27,51,.04), 0 8px 24px rgba(11,27,51,.05);
-  --radio:14px;
+
+  /* Relieve suave, tomado del neomorfismo: una sombra oscura abajo-derecha y
+     una clara arriba-izquierda, como si la tarjeta estuviera levantada.
+     Lo que NO se toma del neomorfismo es su bajo contraste — la tarjeta sigue
+     siendo blanca sobre fondo gris y el azul sigue siendo azul sólido. Se
+     comparó el 16 de septiembre de 2026: el neomorfismo puro bajaba la cifra
+     normal de 17.23 a 6.67 de contraste, y esta pantalla se lee a tres metros. */
+  --sombra:6px 6px 14px rgba(163,177,198,.45), -5px -5px 12px rgba(255,255,255,.95);
+  --sombra-azul:6px 6px 16px rgba(37,99,235,.35), -4px -4px 10px rgba(255,255,255,.6);
+  --hundido:inset 1px 1px 3px rgba(163,177,198,.5);
+  --radio:18px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 /* La base manda todo el tablero, porque cada tamaño está en rem.
@@ -76,8 +87,12 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 #pulso.frio{background:var(--senal);animation:none}
 @keyframes latido{0%{box-shadow:0 0 0 0 rgba(37,99,235,.5)}70%{box-shadow:0 0 0 .8rem rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
 
-#avisos{display:none;padding:.65rem 1.05rem;background:#FEF2F2;border:1px solid #FECACA;
-  border-left:4px solid var(--senal);border-radius:10px;font-size:.82rem;color:#991B1B}
+/* Sin vidrio a propósito. Esta franja es lo único que hace reaccionar a alguien
+   cuando algo se rompió: se queda opaca y con el máximo contraste posible. */
+#avisos{display:none;padding:.65rem 1.05rem;background:#FEF2F2;
+  border:1px solid #FECACA;
+  border-left:4px solid var(--senal);border-radius:12px;font-size:.82rem;color:#991B1B;
+  box-shadow:0 4px 14px rgba(220,38,38,.10)}
 #avisos.hay{display:block}
 
 #tablero{height:100vh;overflow:hidden;display:grid;
@@ -90,7 +105,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 #tablero > .cuerpo { grid-row: 4; }
 #tablero > .panel { grid-row: 5; }
 
-.panel{background:var(--tarjeta);border:1px solid var(--linea);border-radius:var(--radio);
+.panel{background:var(--tarjeta);border:0;border-radius:var(--radio);
   box-shadow:var(--sombra);padding:1rem 1.15rem;display:flex;flex-direction:column;min-height:0}
 .rotulo-col{display:flex;align-items:center;gap:.65rem;flex:none;
   font-family:'Martian Mono',monospace;font-size:.62rem;letter-spacing:.26em;
@@ -100,10 +115,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 
 /* ── Fila de indicadores ─────────────────────────────────────────────── */
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.85rem}
-.kpi{padding:.95rem 1.1rem;background:var(--tarjeta);border:1px solid var(--linea);
+.kpi{padding:.95rem 1.1rem;background:var(--tarjeta);border:0;
   border-radius:var(--radio);box-shadow:var(--sombra);display:flex;flex-direction:column}
-.kpi.fuerte{background:var(--azul);border-color:var(--azul);color:#fff;
-  box-shadow:0 10px 28px rgba(37,99,235,.28)}
+.kpi.fuerte{background:var(--azul);border:0;color:#fff;
+  box-shadow:var(--sombra-azul)}
 .kpi .rotulo{font-family:'Martian Mono',monospace;font-size:.58rem;letter-spacing:.24em;
   text-transform:uppercase;color:var(--humo);margin-bottom:.45rem}
 .kpi.fuerte .rotulo{color:rgba(255,255,255,.82)}
@@ -116,7 +131,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
   background:var(--azul);margin-bottom:.5rem}
 .kpi.fuerte .pie::before{background:rgba(255,255,255,.6)}
 /* barrita dentro del indicador de meta */
-.kpi .mini{height:.3rem;background:#EDF1F8;border-radius:999px;overflow:hidden;margin-top:.55rem}
+.kpi .mini{height:.3rem;background:#EDF1F8;border-radius:999px;overflow:hidden;margin-top:.55rem;
+  box-shadow:var(--hundido)}
 .kpi .mini i{display:block;height:100%;width:0;background:var(--azul);border-radius:999px;
   transition:width .9s cubic-bezier(.2,.8,.2,1)}
 
@@ -134,10 +150,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 #vendedoras{position:relative;flex:1;display:flex;flex-direction:column;gap:.5rem;
   overflow:hidden;min-height:0}
 .fila{display:grid;grid-template-columns:2rem minmax(0,1fr) auto;align-items:center;gap:.9rem;
-  padding:.62rem .85rem;background:#F8FAFE;border:1px solid var(--linea);
-  border-radius:10px;will-change:transform}
-.fila.lider{background:var(--azul);border-color:var(--azul);color:#fff;
-  box-shadow:0 8px 20px rgba(37,99,235,.26)}
+  padding:.62rem .85rem;background:#fff;border:0;
+  border-radius:14px;box-shadow:4px 4px 10px rgba(163,177,198,.35), -3px -3px 8px rgba(255,255,255,.9);
+  will-change:transform}
+.fila.lider{background:var(--azul);border:0;color:#fff;
+  box-shadow:5px 5px 14px rgba(37,99,235,.32), -3px -3px 8px rgba(255,255,255,.7)}
 .fila .puesto{font-family:'Martian Mono',monospace;font-size:.9rem;color:var(--azul);text-align:center}
 .fila.lider .puesto{color:rgba(255,255,255,.85)}
 .nb{display:flex;flex-direction:column;gap:.38rem;min-width:0}
@@ -146,7 +163,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 /* La barra va de 0 a la meta de esa vendedora. El tramo sólido es lo facturado
    y el claro es lo que falta por hacerse efectivo: el mismo lenguaje de la
    gráfica del mes, donde lo facturado va por dentro de lo proyectado. */
-.barra{height:.34rem;background:#E3EAF6;border-radius:999px;overflow:hidden;display:flex}
+.barra{height:.34rem;background:#E3EAF6;border-radius:999px;overflow:hidden;display:flex;
+  box-shadow:var(--hundido)}
 .fila.lider .barra{background:rgba(255,255,255,.28)}
 .barra i{display:block;height:100%;width:0;
   transition:width .9s cubic-bezier(.2,.8,.2,1)}
@@ -170,14 +188,16 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 /* ── Clientes: una tira de tarjetas ──────────────────────────────────── */
 #clientes{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:.85rem;flex:1;min-height:0}
 #clientes li{display:flex;flex-direction:column;gap:.35rem;padding:.85rem 1rem;
-  background:#F8FAFE;border:1px solid var(--linea);border-radius:10px;min-width:0}
-#clientes li.cumplido{background:var(--azul-suave);border-color:#C7D9FF}
+  background:#fff;border:0;border-radius:14px;min-width:0;
+  box-shadow:4px 4px 10px rgba(163,177,198,.35), -3px -3px 8px rgba(255,255,255,.9)}
+#clientes li.cumplido{background:var(--azul-suave)}
 #clientes .nombre{font-size:1.02rem;font-weight:800;font-variation-settings:'wdth' 108;
   text-transform:uppercase;color:var(--tinta-2);white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;letter-spacing:.01em}
 #clientes .cifra{align-self:flex-start;font-family:'Martian Mono',monospace;font-size:1.75rem;
   font-weight:700;color:var(--tinta);line-height:1.1;white-space:nowrap}
-#clientes .metabarra{height:.4rem;background:#E3EAF6;border-radius:999px;overflow:hidden;margin-top:.15rem}
+#clientes .metabarra{height:.4rem;background:#E3EAF6;border-radius:999px;overflow:hidden;margin-top:.15rem;
+  box-shadow:var(--hundido)}
 #clientes .metabarra i{display:block;height:100%;width:0;background:var(--azul);
   border-radius:999px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
 #clientes .metabarra.cumplida i{background:var(--azul-fuerte)}
@@ -205,8 +225,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
    Toma la pantalla completa cada tantos minutos y pasa las láminas. Va en
    z-index 60, debajo de la celebración: si entra una venta mientras corre, la
    venta manda y esto se cierra. */
+/* Vidrio: el fondo deja ver el tablero difuminado por detrás. Solo se nota en
+   los bordes que la lámina no alcanza a cubrir, pero es justo donde antes había
+   un bloque negro plano. El efecto sirve acá porque hay algo detrás que
+   difuminar; sobre el fondo liso del tablero no serviría de nada. */
 #propaganda{position:fixed;inset:0;z-index:60;display:none;overflow:hidden;
-  background:var(--tinta)}
+  background:rgba(11,27,51,.55);
+  backdrop-filter:blur(24px) saturate(150%);
+  -webkit-backdrop-filter:blur(24px) saturate(150%)}
 #propaganda.viva{display:block}
 #propaganda .tira{display:flex;height:100%;width:100%;
   transition:transform .7s cubic-bezier(.2,.8,.2,1)}
@@ -217,7 +243,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
    no como diseño. Que sobre fondo antes que perder parte de la imagen. */
 #propaganda img{max-width:100%;max-height:100%;object-fit:contain;display:block}
 
-#fiesta{position:fixed;inset:0;z-index:70;display:none;background:var(--azul);color:#fff;
+/* Vidrio en la celebración: el tablero se ve difuminado por detrás. Es donde el
+   efecto tiene sentido, porque hay contenido que refractar — sobre el fondo liso
+   de las tarjetas no serviría de nada. El azul se mantiene bien cargado (.72)
+   para que el nombre en blanco siga leyéndose desde tres metros. */
+#fiesta{position:fixed;inset:0;z-index:70;display:none;color:#fff;
+  background:rgba(37,99,235,.72);
+  backdrop-filter:blur(24px) saturate(160%);
+  -webkit-backdrop-filter:blur(24px) saturate(160%);
   place-content:center;justify-items:center;text-align:center;padding:4vh 6vw;gap:1rem}
 #fiesta.viva{display:grid;animation:golpe .45s cubic-bezier(.2,1.4,.4,1) both}
 @keyframes golpe{from{opacity:0;transform:scale(1.06)}to{opacity:1;transform:none}}
@@ -228,7 +261,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 #fiesta .quien{font-size:clamp(3rem,11vw,9rem);line-height:.86;font-weight:900;
   font-variation-settings:'wdth' 122;text-transform:uppercase}
 #fiesta .cuanto{font-size:clamp(1.6rem,4.4vw,3.4rem);margin-top:.3rem}
-#fiesta .flap .cara.vieja{background:var(--azul)}
+/* La ficha que cae necesita fondo opaco para tapar a la nueva, pero el azul
+   sólido se vería como un parche sobre el vidrio. Este es el color que resulta
+   de mezclar el azul translúcido con el tablero claro de atrás. */
+#fiesta .flap .cara.vieja{background:rgb(94,140,239)}
 #fiesta .detalle{font-family:'Martian Mono',monospace;font-size:.82rem;letter-spacing:.2em;
   text-transform:uppercase;opacity:.8}
 /* La gráfica del mes */

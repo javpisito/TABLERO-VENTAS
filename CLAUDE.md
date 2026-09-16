@@ -140,6 +140,56 @@ con la advertencia dicha: en una jornada de 8 horas son casi cien veces tapando
 las cifras, y una pantalla de trabajo que interrumpe tanto se deja de mirar. Es
 una sola variable de `CONFIG`, así que subirlo a 15 o 30 no es tocar código.
 
+**Relieve suave en el tablero, vidrio solo donde hay algo detrás.** Decidido el 16 de
+septiembre de 2026, después de comparar tres diseños sobre el tablero real con datos
+reales. Se midió el contraste de cada uno, no se escogió a ojo:
+
+| | Facturado | Cifra normal | Tarjeta vs fondo |
+|---|---|---|---|
+| Actual de entonces | 5.17 | 17.23 | 1.07 |
+| Neomorfismo puro | 4.24 | **6.67** | **1.00** |
+| Liquid glass en las tarjetas | **2.41** | 16.61 | 1.04 |
+| El que quedó | 5.17 | 17.23 | 1.12 |
+
+**El neomorfismo puro se descartó** porque su efecto exige que tarjeta y fondo sean el
+mismo color — ese `1.00` es la definición del estilo, no un error de implementación. Eso
+borra la distinción `--papel` / `--tarjeta`, hunde la cifra normal a 6.67 y deja a la
+líder del ranking sin destacarse. En una pantalla que se lee a tres metros, todo pesando
+lo mismo es lo contrario de lo que se necesita.
+
+**El liquid glass se descartó para las tarjetas** por una razón distinta: sobre el fondo
+liso del tablero no hay nada que refractar, así que el efecto es casi invisible y aun así
+desploma la tarjeta de Facturado a 2.41, por debajo del mínimo hasta para texto grande.
+
+Lo que quedó toma del neomorfismo solo el relieve —sombra oscura abajo-derecha, clara
+arriba-izquierda, esquinas de 18px, barras hundidas— y conserva la tarjeta blanca, el
+azul sólido y el contraste intacto. Las variables son `--sombra`, `--sombra-azul` y
+`--hundido`. `--papel` bajó a `#EEF2F9`: la sombra clara necesita un fondo apenas más
+oscuro que el blanco para poder verse.
+
+**El vidrio sí se usa donde hay contenido detrás**: `#fiesta` y `#propaganda`, las dos
+pantallas completas. En la celebración el tablero entero se ve difuminado por detrás, que
+es exactamente para lo que sirve el efecto. En la propaganda el difuminado asoma en los
+bordes que la lámina no alcanza a cubrir, donde antes había un bloque plano.
+
+El azul de la celebración se mantiene en 0.72 de opacidad: el contraste del blanco baja de
+5.17 a **3.24**. El nombre y el monto se pintan enormes, así que ahí sobra; los rótulos
+chicos (`.grito` y `.detalle`) quedan por debajo de lo ideal para texto pequeño. Subir la
+opacidad los mejora a costa del efecto — es un solo número si algún día molesta.
+
+`#fiesta .flap .cara.vieja` lleva un azul fijo `rgb(94,140,239)` en vez de `--azul`: esa
+ficha necesita fondo opaco para tapar a la nueva mientras gira, y el azul sólido se veía
+como un parche sobre el vidrio. Ese valor es el resultado de mezclar el azul translúcido
+con el tablero claro de atrás.
+
+**`#avisos` se queda opaca, sin vidrio.** Se probó y el contraste aguantaba (7.55 contra
+7.60), pero esa franja roja es lo único que hace reaccionar a alguien cuando algo se
+rompió: no se le pone un efecto que le reste visibilidad a cambio de nada.
+
+**Una medición que desmintió una sospecha:** se esperaba que `backdrop-filter` costara
+rendimiento con el confeti corriendo. No costó nada — 144 fps con y sin. Eso sí, se midió
+en el portátil del analista (Chrome 151), no en el PC del televisor (Chrome 132).
+
 **La barra de la vendedora mide contra su meta, no contra la líder.** Medía `proyectado`
 sobre la proyección de la primera del ranking, así que la líder salía llena por definición
 y la barra repetía en dibujo lo que el orden de las filas ya decía. Ahora es el mismo
@@ -380,7 +430,7 @@ no vuelve a parsear fechas: ahí fue donde se coló el corrimiento de zona.
 ## Estado actual
 
 **Funcionando de punta a punta desde el 21 de agosto de 2026.** Hoja consolidada montada,
-script publicado en la versión `2026-08-21.6`, llave guardada, endpoint respondiendo con
+script publicado en la versión `2026-09-01.1`, llave guardada, endpoint respondiendo con
 datos reales y el tablero pintándolos. Los cinco clientes son Dra. Dayan Moriones,
 Dra. Daniela Correa, Dr. Jacobo Cucalón, Automat Soft y Decotienda; las vendedoras salen
 solas del Registro.
@@ -423,16 +473,26 @@ se le antoje. Lo que lo cierra es Cloudflare Access, y está pendiente.
 Para revisar el tablero en un portátil sin tocar el archivo, se abre con `?demo` al final
 de la URL. El modo demo trae metas de mentira para poder ver las barras de avance.
 
-Fase 2, inversión desde Meta: el código está escrito y apagado. Muestra cero y dice
-"pendiente de conectar Meta". Se enciende llenando `META_TOKEN` y la columna
-`cuenta_meta` en `Fuentes`.
+**Fase 2, inversión desde Meta: encendida el 1 de septiembre de 2026.** `META_TOKEN`
+guardado en Propiedades del script, los cinco ids en la columna `cuenta_meta` de
+`Fuentes`, y el endpoint devolviendo `metaConectada: true` con inversión real por cliente.
+El disparador de `actualizarTrafico` corre cada 30 minutos.
 
-Bloqueo conocido: SC Ads no tiene un portafolio propio en Meta que agrupe las cuentas de
-los clientes. La decisión fue arrancar con un token de usuario personal (se vence cada
-60 días) y crear el portafolio después. Por eso `recolector.js` detecta el error 190 de
-Meta y lo muestra como aviso en pantalla.
+**El token se vence alrededor del 31 de octubre de 2026.** Es un token de usuario personal
+de ~60 días: la decisión fue arrancar así y crear el portafolio de Meta después, porque
+SC Ads todavía no tiene uno propio que agrupe las cuentas de los clientes. Cuando se
+venza, el televisor lo dice solo — `recolector.js` detecta el error 190 y lo saca como
+aviso rojo — pero conviene renovarlo antes de que la franja aparezca delante del equipo.
+La salida definitiva es un usuario del sistema dentro de un portafolio: ese token no
+expira, y es la razón por la que el portafolio sigue valiendo la pena.
 
-Sin resolver: los ids de las cuentas publicitarias.
+La versión de la Graph API (`API` en `recolector.js`) es la `v25.0` y expira el 29 de
+julio de 2028. Meta retira cada versión a los dos años y medio, así que esto vuelve a
+tocar la puerta cada tanto; el síntoma es un aviso rojo, no un cero en silencio.
+
+Ojo con la moneda: el código toma `spend` tal como viene y el tablero lo pinta como pesos.
+Si alguna cuenta llegara a facturar en dólares, la cifra saldría ~4.000 veces más baja sin
+que nada lo avise. El 1 de septiembre las cinco cuadraban con COP.
 
 Los cinco clientes son Dayan, Daniela, Cucalón, Autonal y Decotienda.
 
