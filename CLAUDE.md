@@ -423,6 +423,14 @@ delante — Cloudflare Access — y eso todavía está pendiente.
 aparecer como aviso rojo en el televisor. Un cero silencioso hace que alguien concluya
 que la pauta se apagó.
 
+La excepción es un tropiezo suelto de la conexión. Desde el 24 de septiembre de 2026 la
+franja de "Sin conexión" espera `fallosAntesDeAvisar` consultas fallidas seguidas (~3
+minutos) si ya hay cifras en pantalla; el punto de conexión sí se pone frío al primer
+fallo. Ese día Apps Script contestaba entre 3 y más de 20 segundos, y la franja roja
+salía y se iba sola con Apps Script vivo, que enseña a ignorarla. El aviso dice de qué
+hora son las cifras y qué contestó el Worker. Y un error del Worker ya no cae a JSONP:
+pasaba por el mismo Worker hasta el mismo Apps Script, el doble de carga en el peor momento.
+
 **Paleta y tipografía del tablero** (no improvisar otras). Es la del reporte de
 resultados de SC Ads: fondo claro, tarjetas blancas y el azul de la marca.
 

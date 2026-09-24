@@ -17,8 +17,11 @@
  *                              Si esta vacia se permite cualquiera.
  */
 
-// Apps Script se toma unos 4 segundos. Si pasa de esto es que algo se colgo.
-var ESPERA_MS = 20000;
+// Apps Script se tomaba unos 4 segundos. El 24 de septiembre de 2026 ya iba en
+// 10-12 y algunas consultas pasaban de 20, que era el corte de antes: el tablero
+// mostraba "sin conexion" con Apps Script vivo. Esperar no gasta CPU del Worker,
+// asi que el corte se subio a 30. Si aun asi se pasa, el problema es la hoja.
+var ESPERA_MS = 30000;
 
 export default {
   async fetch(peticion, entorno) {

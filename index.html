@@ -625,6 +625,10 @@ const CONFIG = {
   propagandaPorLaminaMs: 6000,   // cuánto se queda cada lámina en pantalla
 
   intervaloMs: 60000,      // cada cuánto pregunta por ventas nuevas
+  // Cuántas consultas seguidas tienen que fallar para sacar la franja roja. Apps
+  // Script tropieza de vez en cuando y una sola falla no es una caída: las cifras
+  // en pantalla son de hace un minuto. Con 3, la franja sale a los ~3 minutos.
+  fallosAntesDeAvisar: 3,
   sonidoURL: '',           // mp3 para todas; vacío = campana sintetizada
 
   // La canción de cada vendedora, con ruta relativa a este archivo.
@@ -1629,11 +1633,17 @@ function revisarURL(){
 
 async function traerDatos(){
   if (CONFIG.modo === 'demo') return;
+  let r;
   try{
-    const r = await fetch(urlDeDatos(), { redirect:'follow' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    aceptar(await r.json());
-  } catch (e){ jsonp(); }   // Apps Script a veces no deja pasar el fetch entre orígenes
+    r = await fetch(urlDeDatos(), { redirect:'follow' });
+  } catch (e){ jsonp(); return; }   // el fetch no pasó entre orígenes: ahí sí sirve JSONP
+  // El Worker contestó, aunque sea con error. Antes esto también caía a JSONP, que
+  // pasa por el mismo Worker hasta el mismo Apps Script: cuando Apps Script estaba
+  // lento, el tablero le pedía el doble justo en el peor momento.
+  let datos = null;
+  try { datos = await r.json(); } catch (e){}
+  if (r.ok && datos) aceptar(datos);
+  else caida(datos && datos.detalle ? datos.detalle : 'HTTP ' + r.status);
 }
 
 function jsonp(){
@@ -1642,13 +1652,18 @@ function jsonp(){
   window[nombre] = datos => { aceptar(datos); limpiar(); };
   const s = document.createElement('script');
   s.src = urlDeDatos() + '&callback=' + nombre;
-  s.onerror = () => { caida(); limpiar(); };
+  s.onerror = () => { caida('no se pudo cargar'); limpiar(); };
   document.body.appendChild(s);
-  setTimeout(() => { if (window[nombre]){ caida(); limpiar(); } }, 15000);
+  setTimeout(() => { if (window[nombre]){ caida('no contestó a tiempo'); limpiar(); } }, 30000);
 }
 
+let fallosSeguidos = 0, ultimoBueno = null, avisoRed = '';
+
 function aceptar(datos){
-  avisar(AVISO_RED, false);
+  fallosSeguidos = 0;
+  ultimoBueno = new Date();
+  avisar(avisoRed, false);
+  avisoRed = '';
   if (datos && datos.error === 'llave'){
     marcarPulso(false); avisar(AVISO_LLAVE, true); return;
   }
@@ -1658,9 +1673,24 @@ function aceptar(datos){
   revisarLatido(datos);
 }
 
-function caida(){
+/**
+ * El punto de conexión se pone frío al primer fallo, que es discreto. La franja
+ * roja espera a fallosAntesDeAvisar seguidos, salvo que todavía no haya ningún
+ * dato: una pantalla en ceros sin explicación sí tiene que decirlo de una.
+ *
+ * El aviso dice de qué hora son las cifras y qué contestó el Worker, para
+ * distinguir "Apps Script está lento" de "no hay internet".
+ */
+function caida(detalle){
+  fallosSeguidos++;
   marcarPulso(false);
-  avisar(AVISO_RED, true);
+  if (estado.datos && fallosSeguidos < CONFIG.fallosAntesDeAvisar) return;
+  const hora = ultimoBueno
+    ? ' · las cifras son de las ' + ultimoBueno.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',hour12:false})
+    : '';
+  avisar(avisoRed, false);
+  avisoRed = AVISO_RED + hora + (detalle ? ' · ' + detalle : '');
+  avisar(avisoRed, true);
 }
 
 function marcarPulso(ok){ $('#pulso').classList.toggle('frio', !ok); }
