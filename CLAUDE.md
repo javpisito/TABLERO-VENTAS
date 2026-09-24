@@ -140,6 +140,48 @@ con la advertencia dicha: en una jornada de 8 horas son casi cien veces tapando
 las cifras, y una pantalla de trabajo que interrumpe tanto se deja de mirar. Es
 una sola variable de `CONFIG`, así que subirlo a 15 o 30 no es tocar código.
 
+**Cada cliente tiene su informe, y el informe no recalcula nada.** Pedido el 23 de
+septiembre de 2026: presionar una tarjeta de cliente (o las teclas 1 a 5) abre `#informe`,
+una pantalla completa al estilo Looker Studio con el diseño del tablero — seis indicadores,
+la evolución del mes del cliente, sus vendedoras, el camino a la meta y las próximas citas.
+
+Todo sale del JSON que ya llegó. Facturado, proyectado, meta, ventas y pauta son los de
+`clientes[]` tal cual: el informe **no** vuelve a repartir facturado y proyectado, porque
+esa regla vive solo en `repartir()`. Lo único que se agrega en el navegador es lo que
+el servidor no manda — las vendedoras del cliente y las citas por venir, sumando
+`ventas[]` — y se verificó que esas sumas cuadran con las del servidor para los cinco.
+La gráfica es la misma `pintarGrafico()` del tablero, con las ventas del cliente y su meta.
+
+El panel de productos sale solo si algún cliente llenó `producto`; el reparto por estado
+no está porque hoy todas las ventas son `Agendada` y sería una barra llena que no dice nada.
+
+Va en `z-index: 55`, debajo de la propaganda y de la celebración. El que abre una persona
+se cierra solo a los `informeCierraMs` sin que nadie lo toque: en el televisor no hay
+quien lo cierre, y sin eso el tablero quedaba tapado el resto del día.
+
+**Los informes también salen solos, uno por turno.** Pedido el 24 de septiembre de 2026.
+Cada `informesCadaMs` sale el informe del siguiente cliente durante `informePorClienteMs`;
+va desfasado media vuelta de la propaganda para que nunca coincidan. Uno por turno y no
+los cinco seguidos, para no tapar las cifras minuto y medio de una: con cinco minutos por
+turno, cada cliente sale cada 25. `informesPorRonda` en 5 los pasa todos juntos.
+
+La ronda cede igual que la propaganda (venta corriendo o en cola, propaganda pasando,
+alguien leyendo un informe) y el turno no avanza cuando se salta. Dos diferencias con el
+informe abierto a mano: una venta que entra **cierra** el automático, porque nadie lo
+estaba leyendo y lo que hay que ver después de la campana es el tablero que cambió; y si
+alguien lo toca, deja de ser automático y se queda como uno abierto a mano.
+
+**Las vendedoras que no caben suben solas.** Pedido el 24 de septiembre de 2026: con
+ocho vendedoras el panel recortaba las de abajo. La lista sube en un ciclo sin fin — el
+carril lleva la lista y una copia debajo — y se detiene `vendedorasPausaMs` con la líder
+arriba en cada vuelta. La velocidad va en segundos por fila, no en píxeles, para que se
+lea igual en cualquier pantalla. Si todas caben, no se mueve.
+
+Se detiene detrás de la celebración, la propaganda y el informe: nadie la ve, y mover lo
+que hay detrás del vidrio obliga a recalcular el difuminado en cada cuadro. La copia va
+con `position:absolute` a propósito: ocupando lugar, en el celular hacía crecer el panel
+y entraba en un bucle de mostrarse y quitarse.
+
 **Relieve suave en el tablero, vidrio solo donde hay algo detrás.** Decidido el 16 de
 septiembre de 2026, después de comparar tres diseños sobre el tablero real con datos
 reales. Se midió el contraste de cada uno, no se escogió a ojo:

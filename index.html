@@ -138,8 +138,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 
 /* ── Cuerpo: gráfica + vendedoras ────────────────────────────────────── */
 .cuerpo{display:grid;grid-template-columns:1.45fr 1fr;gap:.95rem;min-height:0}
-#grafico{flex:1;min-height:0;display:block}
-#grafico svg{width:100%;height:100%;display:block;overflow:visible}
+#grafico,.graficoInforme{flex:1;min-height:0;display:block}
+#grafico svg,.graficoInforme svg{width:100%;height:100%;display:block;overflow:visible}
 .leyenda{display:flex;gap:1.3rem;flex:none;margin-top:.5rem;
   font-family:'Martian Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--humo)}
 .leyenda span{display:flex;align-items:center;gap:.4rem}
@@ -147,8 +147,19 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .leyenda .porvenir i{background:#BFD3FF}
 .leyenda .meta i{background:transparent;border-top:2px dashed var(--humo);height:0;width:1rem}
 
-#vendedoras{position:relative;flex:1;display:flex;flex-direction:column;gap:.5rem;
-  overflow:hidden;min-height:0}
+/* Cuando las vendedoras no caben, la lista sube sola en un ciclo sin fin: el
+   carril lleva la lista y una copia pegada debajo, y al terminar de pasar la
+   primera vuelve a cero sin que se note el salto. Se detiene un momento con la
+   líder arriba, que es la fila que todos buscan. */
+#vendedoras{position:relative;flex:1;overflow:hidden;min-height:0}
+#vendedoras.desliza{-webkit-mask-image:linear-gradient(to bottom,#000 88%,transparent);
+  mask-image:linear-gradient(to bottom,#000 88%,transparent)}
+.carril{position:relative;will-change:transform}
+.pista{display:flex;flex-direction:column;gap:.5rem}
+/* La copia va fuera del flujo: si ocupara lugar, en el celular (donde el panel
+   crece con su contenido) haría crecer el panel, la lista dejaría de sobrar, la
+   copia se quitaría, el panel se encogería y vuelta a empezar. */
+.pista.eco{position:absolute;left:0;right:0;top:100%;margin-top:.5rem}
 .fila{display:grid;grid-template-columns:2rem minmax(0,1fr) auto;align-items:center;gap:.9rem;
   padding:.62rem .85rem;background:#fff;border:0;
   border-radius:14px;box-shadow:4px 4px 10px rgba(163,177,198,.35), -3px -3px 8px rgba(255,255,255,.9);
@@ -188,8 +199,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 /* ── Clientes: una tira de tarjetas ──────────────────────────────────── */
 #clientes{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:.85rem;flex:1;min-height:0}
 #clientes li{display:flex;flex-direction:column;gap:.35rem;padding:.85rem 1rem;
-  background:#fff;border:0;border-radius:14px;min-width:0;
-  box-shadow:4px 4px 10px rgba(163,177,198,.35), -3px -3px 8px rgba(255,255,255,.9)}
+  background:#fff;border:0;border-radius:14px;min-width:0;cursor:pointer;
+  box-shadow:4px 4px 10px rgba(163,177,198,.35), -3px -3px 8px rgba(255,255,255,.9);
+  transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s}
+/* Cada tarjeta abre el informe de su cliente. Se levanta al pasar el mouse para
+   que se note que se puede presionar, sin agregar texto que compita con la cifra. */
+#clientes li:hover{transform:translateY(-3px);
+  box-shadow:6px 9px 18px rgba(163,177,198,.5), -3px -3px 8px rgba(255,255,255,.95)}
+#clientes li:focus-visible{outline:3px solid var(--azul);outline-offset:3px}
 #clientes li.cumplido{background:var(--azul-suave)}
 #clientes .nombre{font-size:1.02rem;font-weight:800;font-variation-settings:'wdth' 108;
   text-transform:uppercase;color:var(--tinta-2);white-space:nowrap;overflow:hidden;
@@ -220,6 +237,80 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .flap .ficha.girando .cara.nueva{animation:sube .34s cubic-bezier(.3,.7,.5,1) .1s both}
 @keyframes cae{from{transform:rotateX(0)}to{transform:rotateX(-92deg);opacity:.15}}
 @keyframes sube{from{transform:rotateX(88deg);opacity:.15}to{transform:rotateX(0);opacity:1}}
+
+/* ── Informe de cliente ─────────────────────────────────────────────────
+   Se abre al presionar una tarjeta de cliente (o las teclas 1 a 5). Es el
+   mismo lenguaje del tablero —misma rejilla, mismas tarjetas, mismo azul para
+   lo que importa— pero enfocado en un cliente y en su meta.
+
+   Va en z-index 55: debajo de la propaganda (60) y de la celebración (70). Si
+   entra una venta con el informe abierto, la celebración lo tapa y después
+   vuelve. La propaganda en cambio no sale mientras alguien lo está leyendo. */
+#informe{position:fixed;inset:0;z-index:55;display:none;background:var(--papel);
+  grid-template-rows:auto auto minmax(0,1fr) minmax(0,.5fr);
+  padding:1.4rem 1.7rem 1rem;gap:.95rem;overflow:hidden}
+#informe.viva{display:grid;animation:entraInforme .35s cubic-bezier(.2,.8,.2,1) both}
+@keyframes entraInforme{from{opacity:0;transform:translateY(14px) scale(.99)}to{opacity:1;transform:none}}
+#informe h2{font-size:1.85rem;font-weight:900;font-variation-settings:'wdth' 114;
+  text-transform:uppercase;color:var(--tinta);line-height:1;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.pastilla{font-family:'Martian Mono',monospace;font-size:.66rem;letter-spacing:.24em;
+  color:var(--azul);text-transform:uppercase;background:var(--azul-suave);
+  padding:.4rem .8rem;border-radius:999px;white-space:nowrap}
+.pastilla.tenue{color:var(--humo);background:var(--tarjeta);box-shadow:var(--sombra)}
+.cabeza-der{display:flex;align-items:center;gap:.8rem}
+/* Solo se ve en la ronda automática: se vacía en lo que dura el turno. Fuera de
+   ella queda en escala cero, invisible sin tener que esconderla. */
+#informe .avance{position:absolute;left:0;top:0;width:100%;height:4px;background:var(--azul);
+  transform:scaleX(0);transform-origin:left;pointer-events:none}
+.cerrar{width:2.7rem;height:2.7rem;border-radius:50%;border:0;cursor:pointer;
+  background:var(--tarjeta);color:var(--tinta);font-size:1.5rem;line-height:1;
+  box-shadow:var(--sombra);transition:background .15s,color .15s,transform .15s}
+.cerrar:hover{background:var(--azul);color:#fff;transform:scale(1.06)}
+.cerrar:focus-visible{outline:3px solid var(--azul);outline-offset:3px}
+
+.kpis.seis{grid-template-columns:repeat(6,1fr)}
+#informe .baja{display:grid;grid-template-columns:1fr 1.4fr;gap:.95rem;min-height:0}
+#informe .baja.conProductos{grid-template-columns:1fr 1.4fr .9fr}
+
+/* Listas del informe: el mismo .fila del ranking, así se leen igual */
+.listaInforme{flex:1;display:flex;flex-direction:column;gap:.5rem;overflow:hidden;min-height:0}
+.montoPlano{font-family:'Martian Mono',monospace;font-weight:700;font-size:.92rem;
+  white-space:nowrap;color:var(--tinta)}
+.fila.lider .montoPlano{color:#fff}
+.masFilas{font-family:'Martian Mono',monospace;font-size:.6rem;color:var(--humo);
+  letter-spacing:.1em;padding-left:.85rem}
+.sinDatos{flex:1;display:grid;place-items:center;text-align:center;color:var(--humo);
+  font-size:.95rem;line-height:1.5;padding:1rem}
+.graficoInforme > .sinDatos{height:100%}
+
+/* Camino a la meta */
+.camino{flex:1;display:flex;flex-direction:column;justify-content:center;gap:.65rem;min-height:0}
+.camino .titular{display:flex;align-items:baseline;gap:.7rem}
+.camino .grande{font-family:'Martian Mono',monospace;font-weight:700;font-size:2.3rem;
+  color:var(--tinta);line-height:1}
+.camino .grande.cumplida{color:var(--azul)}
+.camino .explica{font-family:'Martian Mono',monospace;font-size:.6rem;color:var(--humo);letter-spacing:.06em}
+.camino .barra{height:.65rem}
+.camino .datos{display:grid;grid-template-columns:1fr 1fr;gap:.5rem 1.1rem}
+.camino .dato span{display:block;font-family:'Martian Mono',monospace;font-size:.55rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--humo);margin-bottom:.15rem}
+.camino .dato b{font-family:'Martian Mono',monospace;font-size:.95rem;color:var(--tinta)}
+.camino .dato b.azul{color:var(--azul)}
+
+/* Próximas citas: lo agendado que todavía no llega, lo que el equipo puede empujar */
+.citas{flex:1;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:min-content;
+  gap:.55rem;min-height:0;overflow:hidden}
+.cita{background:#fff;border-radius:12px;padding:.55rem .75rem;min-width:0;
+  box-shadow:4px 4px 10px rgba(163,177,198,.35), -3px -3px 8px rgba(255,255,255,.9)}
+.cita .cuando{font-family:'Martian Mono',monospace;font-size:.58rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--azul)}
+.cita .quien{font-size:1rem;font-weight:800;text-transform:uppercase;color:var(--tinta);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:.15rem 0}
+.cita .cuanto{font-family:'Martian Mono',monospace;font-weight:700;font-size:.85rem;color:var(--tinta-2)}
+.cita .que{font-size:.72rem;color:var(--humo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cita.mas{display:grid;place-items:center;font-family:'Martian Mono',monospace;
+  font-size:.75rem;color:var(--humo);background:var(--azul-suave);box-shadow:none}
 
 /* ── Propaganda ──────────────────────────────────────────────────────────
    Toma la pantalla completa cada tantos minutos y pasa las láminas. Va en
@@ -312,6 +403,12 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
   #clientes{grid-auto-flow:row;grid-auto-columns:auto}
   header{flex-direction:column;align-items:flex-start;gap:.8rem}
   footer{display:none}
+  /* En el celular el informe sí puede desplazarse: ahí hay quien haga scroll */
+  #informe{grid-template-rows:none;overflow-y:auto;padding:1.2rem}
+  #informe .kpis.seis{grid-template-columns:1fr 1fr}
+  #informe .baja,#informe .baja.conProductos{grid-template-columns:1fr}
+  .graficoInforme{height:16rem;flex:none}
+  .citas{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
 </style>
@@ -379,7 +476,12 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
     </section>
     <section class="panel">
       <div class="rotulo-col">Vendedoras</div>
-      <div id="vendedoras"></div>
+      <div id="vendedoras">
+        <div class="carril" id="vCarril">
+          <div class="pista" id="vPista"></div>
+          <div class="pista eco" id="vEco" aria-hidden="true"></div>
+        </div>
+      </div>
       <div id="vacio">Todavía no hay ventas este mes. La primera que se registre aparece aquí y suena la campana.</div>
     </section>
   </div>
@@ -388,6 +490,88 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
     <div class="rotulo-col">Clientes</div>
     <ul id="clientes"></ul>
   </section>
+</div>
+
+<!-- Informe de un cliente. Se llena con los datos que ya trae el JSON: no hace
+     ninguna consulta propia y no recalcula facturado ni proyectado. -->
+<div id="informe" role="dialog" aria-modal="true" aria-labelledby="iNombre">
+  <i class="avance" id="iAvance" aria-hidden="true"></i>
+  <header>
+    <div class="marca-bloque">
+      <span class="pastilla" id="iPastilla">Informe</span>
+      <h2 id="iNombre">—</h2>
+    </div>
+    <div class="cabeza-der">
+      <span class="pastilla" id="iMes"></span>
+      <span class="pastilla tenue" id="iDia"></span>
+      <button class="cerrar" id="iCerrar" aria-label="Volver al tablero" title="Volver al tablero (Esc)">&times;</button>
+    </div>
+  </header>
+
+  <div class="kpis seis">
+    <div class="kpi fuerte">
+      <div class="rotulo">Facturado</div>
+      <div class="flap cifra" id="iFacturado"></div>
+      <div class="pie">del mes, lo que ya se hizo</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Proyectado</div>
+      <div class="flap cifra" id="iProyectado"></div>
+      <div class="pie">todo el mes, incluye facturado</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Meta del mes</div>
+      <div class="flap cifra" id="iMeta"></div>
+      <div class="mini"><i id="iMiniMeta"></i></div>
+      <div class="pie" id="iPieMeta"></div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Ventas</div>
+      <div class="flap cifra" id="iVentas"></div>
+      <div class="pie" id="iPieVentas"></div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Pauta</div>
+      <div class="flap cifra" id="iPauta"></div>
+      <div class="pie" id="iPiePauta"></div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Retorno de la pauta</div>
+      <div class="flap cifra" id="iRetorno"></div>
+      <div class="pie" id="iPieRetorno"></div>
+    </div>
+  </div>
+
+  <div class="cuerpo">
+    <section class="panel">
+      <div class="rotulo-col">Evolución del cliente</div>
+      <div class="graficoInforme" id="iGrafico"></div>
+      <div class="leyenda">
+        <span><i></i>ya se hizo</span>
+        <span class="porvenir"><i></i>agendado por venir</span>
+        <span class="meta" id="iLeyendaMeta"><i></i>meta</span>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="rotulo-col">Vendedoras del cliente <em id="iVendResumen"></em></div>
+      <div class="listaInforme" id="iVendedoras"></div>
+    </section>
+  </div>
+
+  <div class="baja" id="iBaja">
+    <section class="panel">
+      <div class="rotulo-col">Camino a la meta</div>
+      <div class="camino" id="iCamino"></div>
+    </section>
+    <section class="panel">
+      <div class="rotulo-col">Próximas citas <em id="iCitasResumen"></em></div>
+      <div class="citas" id="iCitas"></div>
+    </section>
+    <section class="panel" id="iProductosPanel">
+      <div class="rotulo-col">Productos</div>
+      <div class="listaInforme" id="iProductos"></div>
+    </section>
+  </div>
 </div>
 
 <!-- Propaganda. Va por debajo de #fiesta a propósito: si por lo que sea las dos
@@ -402,7 +586,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
 </div>
 <div id="papelitos"></div>
 
-<footer>T · venta de prueba &nbsp;|&nbsp; P · propaganda &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
+<footer>T · venta de prueba &nbsp;|&nbsp; P · propaganda &nbsp;|&nbsp; 1–5 · informe de cliente &nbsp;|&nbsp; I · ronda de informes &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
 
 <script>
 /* ================================================================
@@ -477,7 +661,31 @@ const CONFIG = {
     'Alejandra': 20000000,
     'Susana':    30000000
   },
-  horaRecarga: 4           // recarga sola a esta hora, para que el TV no lleve semanas abierto
+  horaRecarga: 4,          // recarga sola a esta hora, para que el TV no lleve semanas abierto
+
+  // El informe de un cliente se cierra solo si nadie lo toca en este rato. En el
+  // televisor no hay quien lo cierre: sin esto, alguien presiona un cliente, se va,
+  // y el tablero queda tapado por el informe el resto del día.
+  informeCierraMs: 90000,
+
+  // Ronda automática de informes, como la propaganda pero con los clientes. Cada
+  // turno muestra el informe de UN cliente y el siguiente turno pasa al que sigue,
+  // así que cada cliente sale cada 25 minutos. Se pidió el 24 de septiembre de 2026.
+  //
+  // Va desfasada media vuelta de la propaganda para que nunca salgan juntas: con
+  // estos números algo tapa el tablero cada dos minutos y medio. Si el equipo deja
+  // de mirar la pantalla, subir informesCadaMs es lo primero. En 0 se apaga.
+  // Con informesPorRonda en 5 pasan los cinco seguidos, a costa de tapar las
+  // cifras más de minuto y medio de una.
+  informesCadaMs: 300000,
+  informesDesfaseMs: 150000,
+  informesPorRonda: 1,
+  informePorClienteMs: 20000,
+
+  // Las vendedoras que no caben suben solas. Segundos que tarda en pasar cada fila
+  // y cuánto se queda quieta la lista con la líder arriba en cada vuelta.
+  vendedorasSegPorFila: 3,
+  vendedorasPausaMs: 4000
 };
 
 // Abrir la página con ?demo al final fuerza el modo de prueba sin tocar el archivo.
@@ -490,6 +698,9 @@ const MESES_ES = ['enero','febrero','marzo','abril','mayo','junio',
                   'julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const pesos = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});
 const $ = s => document.querySelector(s);
+// Para lo que entra a innerHTML desde la hoja: nombres y productos se escriben a mano.
+const esc = s => String(s).replace(/[&<>"']/g, ch =>
+  ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[ch]);
 const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ================================================================
@@ -631,6 +842,290 @@ function recibir(datos){
 }
 
 /* ================================================================
+   INFORME DE CLIENTE
+   ================================================================ */
+// informeAuto dice quién lo abrió: la ronda automática o una persona. Cambia cómo
+// se cierra — la ronda a los informePorClienteMs, la persona cuando deja de tocarlo —
+// y si la venta que entra se lo lleva por delante.
+let informeCliente = null, informeReloj = null, informeAuto = false, informeTurno = 0;
+
+function abrirInforme(nombre, auto){
+  if (!estado.datos) return;
+  const cambia = informeCliente && informeCliente !== nombre;
+  informeCliente = nombre;
+  informeAuto = !!auto;
+  cerrarPropaganda();          // si estaba pasando, que se vea lo que se pidió
+  const caja = $('#informe');
+  caja.classList.add('viva');
+  pintarInforme();
+  if (!informeCliente) return;   // el cliente ya no está en los datos y se cerró
+  // Pasar de un cliente a otro con el informe ya abierto no dispara la entrada
+  // del contenedor, así que el cambio de cifras se veía como un parpadeo.
+  if (cambia && !quieto){
+    [...caja.children].forEach(el => {
+      if (el.id === 'iAvance') return;
+      el.animate([{ opacity:0, transform:'translateY(10px)' }, { opacity:1, transform:'none' }],
+                 { duration:380, easing:'cubic-bezier(.2,.8,.2,1)' });
+    });
+  }
+  clearTimeout(informeReloj);
+  informeReloj = null;
+  if (informeAuto){
+    const clientes = estado.datos.clientes || [];
+    const n = clientes.findIndex(c => c.cliente === nombre) + 1;
+    $('#iPastilla').textContent = 'Informe · ' + n + ' de ' + clientes.length;
+    animarAvance();
+  } else {
+    marcarManual();
+    reiniciarCierreInforme();
+    $('#iCerrar').focus({ preventScroll: true });
+  }
+}
+
+function cerrarInforme(){
+  clearTimeout(informeReloj);
+  informeReloj = null;
+  if (!informeCliente) return;
+  const quien = informeCliente, eraAuto = informeAuto;
+  informeCliente = null;
+  informeAuto = false;
+  marcarManual();
+  $('#informe').classList.remove('viva');
+  // Nadie lo abrió a mano: no hay tarjeta a la que devolverle el foco, y
+  // devolvérselo le pintaría el contorno de foco en el televisor.
+  if (eraAuto) return;
+  // El foco vuelve a la tarjeta desde donde se abrió, para seguir con el teclado.
+  const li = $('#clientes').querySelector(`[data-cliente="${CSS.escape(quien)}"]`);
+  if (li) li.focus({ preventScroll: true });
+}
+
+function reiniciarCierreInforme(){
+  clearTimeout(informeReloj);
+  informeReloj = setTimeout(cerrarInforme, CONFIG.informeCierraMs);
+}
+
+/** Quita lo que solo tiene sentido en la ronda: la cuenta "2 de 5" y la barrita. */
+function marcarManual(){
+  $('#iPastilla').textContent = 'Informe';
+  $('#iAvance').getAnimations().forEach(a => a.cancel());
+}
+
+/** La barrita de arriba se vacía en lo que dura el turno: dice cuánto falta. */
+function animarAvance(){
+  const barra = $('#iAvance');
+  barra.getAnimations().forEach(a => a.cancel());
+  barra.animate([{ transform:'scaleX(1)' }, { transform:'scaleX(0)' }],
+                { duration:CONFIG.informePorClienteMs, easing:'linear' });
+}
+
+/* La ronda automática. Se salta entera por las mismas razones que la propaganda:
+   una venta corriendo o en la cola, la propaganda pasando, o alguien leyendo un
+   informe que abrió a propósito. El turno no avanza cuando se salta, así que el
+   cliente que tocaba sale en la siguiente. */
+function arrancarInformes(){
+  if (!(CONFIG.informesCadaMs > 0)) return;
+  setTimeout(() => {
+    intentarInformes();
+    setInterval(intentarInformes, CONFIG.informesCadaMs);
+  }, CONFIG.informesDesfaseMs);
+}
+
+function intentarInformes(){
+  if (estado.celebrando || estado.cola.length || propagandaViva || informeCliente) return;
+  if (!estado.datos || !(estado.datos.clientes || []).length) return;
+  let quedan = Math.max(1, CONFIG.informesPorRonda || 1);
+  const paso = () => {
+    // Se relee en cada paso: los datos se refrescan cada minuto y un cliente
+    // pudo salir de Fuentes a mitad de la ronda.
+    const clientes = (estado.datos && estado.datos.clientes) || [];
+    if (!quedan || !clientes.length || (informeCliente && !informeAuto)){
+      if (informeAuto) cerrarInforme();
+      return;
+    }
+    quedan = Math.min(quedan, clientes.length) - 1;
+    const c = clientes[informeTurno % clientes.length];
+    informeTurno++;
+    abrirInforme(c.cliente, true);
+    informeReloj = setTimeout(paso, CONFIG.informePorClienteMs);
+  };
+  paso();
+}
+
+/**
+ * El informe del cliente abierto. Todo sale del JSON que ya llegó, sin consultas
+ * propias:
+ *
+ * - Facturado, proyectado, meta, ventas y pauta son los de clientes[] tal cual.
+ *   Aquí NO se reparte nada: qué cuenta como facturado lo decide repartir() en
+ *   el servidor y en ningún otro lado.
+ * - La gráfica es la misma pintarGrafico() del tablero, con las ventas del cliente.
+ * - Los desgloses solo suman montos de ventas[], que ya viene sin anuladas.
+ *
+ * Se vuelve a pintar en cada dibujar(), así que se actualiza solo mientras está
+ * abierto, igual que el tablero de atrás.
+ */
+function pintarInforme(){
+  const d = estado.datos;
+  if (!d || !informeCliente) return;
+  const c = (d.clientes || []).find(x => x.cliente === informeCliente);
+  if (!c){ cerrarInforme(); return; }   // lo sacaron de Fuentes con el informe abierto
+
+  const ventas = (d.ventas || []).filter(v => v.cliente === c.cliente);
+  const dias = Number(d.diasDelMes) || 30;
+  const hoy = Math.min(Math.max(Number(d.dia) || 1, 1), dias);
+  const meta = Number(c.metaMes) || 0;
+  const fact = Number(c.facturado) || 0;
+  const proy = Number(c.proyectado) || 0;
+  const pauta = Number(c.inversion) || 0;
+  const n = Number(c.ventas) || 0;
+
+  $('#iNombre').textContent = c.cliente;
+  $('#iMes').textContent = d.mes || '';
+  $('#iDia').textContent = 'día ' + hoy + ' de ' + dias;
+
+  // ── indicadores ──
+  pintarFlap($('#iFacturado'), pesos.format(fact));
+  pintarFlap($('#iProyectado'), pesos.format(proy));
+  pintarFlap($('#iMeta'), meta > 0 ? Math.round(fact / meta * 100) + '%' : '—');
+  $('#iMiniMeta').style.width = (meta > 0 ? Math.min(100, fact / meta * 100) : 0) + '%';
+  $('#iPieMeta').textContent = meta > 0 ? 'de ' + pesos.format(meta) : 'falta meta_mes en Fuentes';
+  pintarFlap($('#iVentas'), String(n));
+  $('#iPieVentas').textContent = n > 0
+    ? 'ticket promedio ' + pesos.format(Math.round(proy / n)) : 'ninguna este mes';
+  pintarFlap($('#iPauta'), pesos.format(pauta));
+  $('#iPiePauta').textContent = !d.metaConectada ? 'Meta sin conectar'
+    : pauta <= 0 ? 'sin pauta este mes'
+    : n > 0 ? 'costo por venta ' + pesos.format(Math.round(pauta / n))
+    : 'pauta sin ventas registradas';
+  // Contra lo facturado, no lo proyectado: la pauta ya se gastó, y lo justo es
+  // compararla con plata que ya entró y no con citas que todavía pueden caerse.
+  pintarFlap($('#iRetorno'), pauta > 0 ? (fact / pauta).toFixed(1).replace('.', ',') + 'x' : '—');
+  $('#iPieRetorno').textContent = pauta > 0 ? 'facturado por cada $1 de pauta' : 'no hay pauta que medir';
+  ['#iFacturado','#iProyectado','#iMeta','#iVentas','#iPauta','#iRetorno'].forEach(s => encajarCifra($(s)));
+
+  // ── gráfica ──
+  const caja = $('#iGrafico');
+  if (ventas.length){
+    pintarGrafico(d, { caja, ventas, meta, leyenda: $('#iLeyendaMeta') });
+  } else {
+    caja.innerHTML = '<div class="sinDatos">' + (pauta > 0
+      ? 'Hay ' + esc(pesos.format(pauta)) + ' de pauta este mes y ninguna venta registrada.'
+      : 'Todavía no hay ventas de este cliente este mes.') + '</div>';
+    $('#iLeyendaMeta').style.display = 'none';
+  }
+
+  // ── vendedoras del cliente ──
+  // Suma lo del mes y cuenta ventas. El facturado por vendedora dentro de un
+  // cliente pediría repetir aquí la regla de repartir(), y eso no se hace.
+  const porVend = new Map();
+  ventas.forEach(v => {
+    const k = String(v.vendedora || '').trim() || 'Sin vendedora';
+    const o = porVend.get(k) || { monto: 0, n: 0 };
+    o.monto += Number(v.monto) || 0;
+    o.n++;
+    porVend.set(k, o);
+  });
+  const vend = [...porVend].sort((a, b) => b[1].monto - a[1].monto);
+  $('#iVendResumen').textContent = vend.length
+    ? vend.length + (vend.length === 1 ? ' vendedora' : ' vendedoras') : '';
+  const MAX_VEND = 7;
+  $('#iVendedoras').innerHTML = !vend.length
+    ? '<div class="sinDatos">Sin ventas este mes.</div>'
+    : vend.slice(0, MAX_VEND).map(([quien, o], i) => {
+        const parte = proy > 0 ? o.monto / proy * 100 : 0;
+        return `<div class="fila${i === 0 ? ' lider' : ''}">
+          <div class="puesto">${String(i + 1).padStart(2, '0')}</div>
+          <div class="nb"><div class="nombre">${esc(quien)}</div>
+            <div class="barra"><i class="hecho" style="width:${parte.toFixed(1)}%"></i></div>
+            <div class="cierres">${o.n} ${o.n === 1 ? 'venta' : 'ventas'} · ${Math.round(parte)}% del cliente</div></div>
+          <div class="der"><div class="rot">del mes</div><div class="montoPlano">${esc(pesos.format(o.monto))}</div></div>
+        </div>`;
+      }).join('') + (vend.length > MAX_VEND ? `<div class="masFilas">+${vend.length - MAX_VEND} más</div>` : '');
+
+  // ── camino a la meta ──
+  const quedan = dias - hoy;
+  const cam = $('#iCamino');
+  if (meta <= 0){
+    cam.innerHTML = '<div class="sinDatos">Este cliente no tiene meta del mes.<br>Se carga en la columna meta_mes de Fuentes.</div>';
+  } else {
+    const hecho = Math.min(100, fact / meta * 100);
+    const porVenir = Math.max(0, Math.min(100 - hecho, (proy - fact) / meta * 100));
+    const llega = Math.round(proy / meta * 100);
+    const falta = meta - proy;
+    const cumplida = fact >= meta;
+    const datos = [
+      ['Facturado', pesos.format(fact), false],
+      ['Agendado por venir', pesos.format(Math.max(0, proy - fact)), false]
+    ];
+    if (cumplida){
+      datos.push(['Meta', 'cumplida', true], ['Por encima', '+' + pesos.format(fact - meta), true]);
+    } else if (falta <= 0){
+      datos.push(['Con lo agendado', 'se cumple', true], ['Sobrarían', '+' + pesos.format(-falta), true]);
+    } else {
+      datos.push(['Falta vender', pesos.format(falta), false],
+        quedan > 0
+          ? ['Ritmo · ' + quedan + (quedan === 1 ? ' día' : ' días'), pesos.format(Math.ceil(falta / quedan)) + ' / día', false]
+          : ['Ritmo', 'el mes terminó', false]);
+    }
+    cam.innerHTML = `
+      <div class="titular"><span class="grande${llega >= 100 ? ' cumplida' : ''}">${llega}%</span>
+        <span class="explica">de la meta si se cumple todo lo agendado</span></div>
+      <div class="barra${cumplida ? ' cumplida' : ''}"><i class="hecho" style="width:${hecho.toFixed(1)}%"></i><i class="porvenir" style="width:${porVenir.toFixed(1)}%"></i></div>
+      <div class="datos">${datos.map(([r, v, azul]) =>
+        `<div class="dato"><span>${esc(r)}</span><b${azul ? ' class="azul"' : ''}>${esc(v)}</b></div>`).join('')}</div>`;
+  }
+
+  // ── próximas citas ──
+  // Lo agendado para después de hoy: la plata que todavía se puede empujar o caer.
+  const citas = ventas.filter(v => Number(v.dia) > hoy)
+    .sort((a, b) => (a.dia - b.dia) || ((Number(b.monto) || 0) - (Number(a.monto) || 0)));
+  const sumaCitas = citas.reduce((s, v) => s + (Number(v.monto) || 0), 0);
+  $('#iCitasResumen').textContent = citas.length
+    ? citas.length + (citas.length === 1 ? ' cita · ' : ' citas · ') + pesos.format(sumaCitas) : '';
+  const MAX_CITAS = 6;
+  const muestra = citas.length > MAX_CITAS ? citas.slice(0, MAX_CITAS - 1) : citas;
+  $('#iCitas').innerHTML = !citas.length
+    ? '<div class="sinDatos" style="grid-column:1/-1">No hay citas agendadas para lo que queda del mes.</div>'
+    : muestra.map(v => `<div class="cita">
+          <div class="cuando">Día ${Number(v.dia)}</div>
+          <div class="quien">${esc(v.vendedora || '—')}</div>
+          <div class="cuanto">${esc(pesos.format(Number(v.monto) || 0))}</div>
+          ${String(v.producto || '').trim() ? `<div class="que">${esc(v.producto)}</div>` : ''}
+        </div>`).join('')
+      + (citas.length > MAX_CITAS ? `<div class="cita mas">+${citas.length - MAX_CITAS + 1} más</div>` : '');
+
+  // ── productos, solo si el cliente los llena ──
+  // Casi nadie llena esa columna: un panel vacío en cuatro de cinco clientes sería
+  // ruido, así que solo aparece cuando hay algo que mostrar.
+  const porProd = new Map();
+  ventas.forEach(v => {
+    const p = String(v.producto || '').trim();
+    if (!p) return;
+    const o = porProd.get(p) || { monto: 0, n: 0 };
+    o.monto += Number(v.monto) || 0;
+    o.n++;
+    porProd.set(p, o);
+  });
+  const hayProductos = porProd.size > 0;
+  $('#iProductosPanel').style.display = hayProductos ? '' : 'none';
+  $('#iBaja').classList.toggle('conProductos', hayProductos);
+  if (hayProductos){
+    const MAX_PROD = 4;
+    $('#iProductos').innerHTML = [...porProd].sort((a, b) => b[1].monto - a[1].monto)
+      .slice(0, MAX_PROD).map(([p, o], i) => {
+        const parte = proy > 0 ? o.monto / proy * 100 : 0;
+        return `<div class="fila">
+          <div class="puesto">${String(i + 1).padStart(2, '0')}</div>
+          <div class="nb"><div class="nombre">${esc(p)}</div>
+            <div class="barra"><i class="hecho" style="width:${parte.toFixed(1)}%"></i></div>
+            <div class="cierres">${o.n} ${o.n === 1 ? 'venta' : 'ventas'} · ${Math.round(parte)}%</div></div>
+          <div class="der"><div class="montoPlano">${esc(pesos.format(o.monto))}</div></div>
+        </div>`;
+      }).join('');
+  }
+}
+
+/* ================================================================
    PROPAGANDA
    ================================================================ */
 let propagandaLaminas = [];   // huecos donde la imagen no cargó
@@ -662,6 +1157,8 @@ function intentarPropaganda(){
   // La venta manda. Si hay una celebración corriendo o esperando en la cola,
   // esta ronda se salta entera en vez de encimarse; vuelve en el próximo turno.
   if (estado.celebrando || estado.cola.length) return;
+  // Tampoco si alguien está leyendo un informe: lo abrió a propósito.
+  if (informeCliente) return;
   const laminas = propagandaLaminas.filter(Boolean);
   if (laminas.length) correrPropaganda(laminas);
 }
@@ -697,8 +1194,12 @@ function cerrarPropaganda(){
 }
 
 function siguienteFiesta(){
-  // Si entró una venta mientras corría la propaganda, la propaganda se va.
+  // Si entró una venta mientras corría la propaganda, la propaganda se va. Y el
+  // informe de la ronda automática también: nadie lo estaba leyendo a propósito,
+  // y lo que hay que ver después de la campana es el tablero que acaba de cambiar.
+  // El que abrió una persona se queda, tapado por la celebración mientras dura.
   cerrarPropaganda();
+  if (informeAuto) cerrarInforme();
   if (estado.celebrando) return;
   const v = estado.cola.shift();
   if (!v){ dibujar(); return; }
@@ -749,10 +1250,11 @@ function dibujar(){
 
   pintarAvisos();
   pintarClientes(clientes);
+  if (informeCliente) pintarInforme();
 
   const orden = (d.vendedoras || []);
   $('#vacio').style.display = orden.length ? 'none' : 'block';
-  const cont = $('#vendedoras');
+  const cont = $('#vPista');
   const antes = new Map();
   [...cont.children].forEach(el => antes.set(el.dataset.quien, el.getBoundingClientRect().top));
   // Lo facturado ya está adentro de lo proyectado: sumarlos contaría dos veces la
@@ -809,6 +1311,70 @@ function dibujar(){
                  {duration:620, easing:'cubic-bezier(.2,.8,.2,1)'});
     });
   }
+  prepararDesliz();
+}
+
+/* ================================================================
+   VENDEDORAS QUE SE DESLIZAN
+   ================================================================ */
+const desliz = { y:0, alto:0, vel:0, pausaHasta:0, antes:0, encima:false };
+
+/**
+ * Decide si la lista necesita moverse y deja lista la copia de abajo. Corre
+ * después de cada dibujar() y cuando cambia el tamaño del panel.
+ *
+ * La copia se toma de la lista ya pintada, pero sin las caras viejas de las
+ * fichas: esas las borra un setTimeout que solo conoce a las originales, y en la
+ * copia se quedarían pegadas encima del monto para siempre.
+ */
+function prepararDesliz(){
+  const caja = $('#vendedoras'), pista = $('#vPista'), eco = $('#vEco');
+  const sobra = !quieto && pista.children.length > 1 && pista.offsetHeight > caja.clientHeight + 1;
+  caja.classList.toggle('desliza', sobra);
+  if (!sobra){
+    eco.replaceChildren();
+    desliz.alto = 0; desliz.y = 0;
+    $('#vCarril').style.transform = '';
+    return;
+  }
+  const copia = pista.cloneNode(true);
+  copia.querySelectorAll('.cara.vieja').forEach(n => n.remove());
+  copia.querySelectorAll('.girando').forEach(n => n.classList.remove('girando'));
+  eco.replaceChildren(...copia.children);
+
+  const antes = desliz.alto;
+  // Una vuelta completa es la lista más el espacio que la separa de la copia.
+  desliz.alto = eco.offsetTop - pista.offsetTop;
+  // La velocidad va en filas y no en píxeles: así se lee igual en el portátil
+  // que en el televisor, aunque las filas midan distinto.
+  desliz.vel = (desliz.alto / pista.children.length) / (CONFIG.vendedorasSegPorFila || 3);
+  if (!antes) desliz.pausaHasta = performance.now() + CONFIG.vendedorasPausaMs;
+  desliz.y %= desliz.alto;
+}
+
+function deslizar(t){
+  requestAnimationFrame(deslizar);
+  const dt = Math.min(100, t - (desliz.antes || t));   // tras una pestaña oculta, no salta
+  desliz.antes = t;
+  if (!desliz.alto || desliz.encima || t < desliz.pausaHasta) return;
+  // Detrás del vidrio de la celebración, de la propaganda o del informe nadie la
+  // ve, y mover lo que está detrás obliga a recalcular el difuminado en cada cuadro.
+  if (estado.celebrando || propagandaViva || informeCliente) return;
+  desliz.y += desliz.vel * dt / 1000;
+  if (desliz.y >= desliz.alto){
+    desliz.y = 0;                                       // la líder vuelve arriba
+    desliz.pausaHasta = t + CONFIG.vendedorasPausaMs;
+  }
+  $('#vCarril').style.transform = 'translateY(' + (-desliz.y) + 'px)';
+}
+
+function arrancarDesliz(){
+  const caja = $('#vendedoras');
+  // Con el mouse encima se queda quieta: quien lo pone ahí quiere leer una fila.
+  caja.addEventListener('mouseenter', () => { desliz.encima = true; });
+  caja.addEventListener('mouseleave', () => { desliz.encima = false; });
+  new ResizeObserver(prepararDesliz).observe(caja);
+  requestAnimationFrame(deslizar);
 }
 
 /**
@@ -846,6 +1412,8 @@ function pintarClientes(clientes){
     if (!li){
       li = document.createElement('li');
       li.dataset.cliente = c.cliente;
+      li.tabIndex = 0;
+      li.setAttribute('role', 'button');
       li.innerHTML = '<span class="nombre"></span><span class="cifra"></span>'
                    + '<span class="metabarra"><i></i></span><span class="detalle"></span>';
       li.style.order = String(ul.children.length);
@@ -854,6 +1422,7 @@ function pintarClientes(clientes){
     vistos.add(c.cliente);
 
     li.querySelector('.nombre').textContent = c.cliente;
+    li.setAttribute('aria-label', 'Ver informe de ' + c.cliente);
     li.querySelector('.cifra').textContent = pesos.format(c.facturado);
     encajarCifra(li.querySelector('.cifra'));
 
@@ -899,21 +1468,29 @@ function pintarClientes(clientes){
    ================================================================ */
 const G = { ancho:1000, alto:330, izq:96, der:18, arriba:18, abajo:34 };
 
-function pintarGrafico(d){
-  const caja = $('#grafico');
+/**
+ * La gráfica del mes. Sin opciones dibuja la del tablero; el informe de cliente
+ * la llama con sus propias ventas, su meta y su caja. Es la misma función a
+ * propósito: si la forma de dibujar lo facturado y lo agendado cambia, cambia en
+ * los dos lados a la vez y no pueden contar cosas distintas.
+ */
+function pintarGrafico(d, opc){
+  opc = opc || {};
+  const caja = opc.caja || $('#grafico');
   const dias = Number(d.diasDelMes) || 30;
   const diaHoy = Math.min(Math.max(Number(d.dia) || 1, 1), dias);
 
   // acumulado por día de cita
   const porDia = new Array(dias + 2).fill(0);
-  (d.ventas || []).forEach(v => {
+  (opc.ventas || d.ventas || []).forEach(v => {
     const i = Number(v.dia) || 0;
     if (i >= 1 && i <= dias) porDia[i] += Number(v.monto) || 0;
   });
   const acum = [0];
   for (let i = 1; i <= dias; i++) acum[i] = acum[i - 1] + porDia[i];
 
-  const meta = (d.clientes || []).reduce((s, c) => s + (Number(c.metaMes) || 0), 0);
+  const meta = opc.meta != null ? Number(opc.meta) || 0
+    : (d.clientes || []).reduce((s, c) => s + (Number(c.metaMes) || 0), 0);
 
   // La escala la manda el mes, no la meta. A principio de mes la meta es varias veces
   // lo vendido, y meterla en el techo deja la curva aplastada contra el piso sin poder
@@ -963,7 +1540,7 @@ function pintarGrafico(d){
     partes.push(`<text x="${G.ancho - G.der}" y="${y(metaVisible) - 9}" class="rotuloMeta">meta ${enMillones(metaVisible)}</text>`);
   }
   // la leyenda no anuncia una línea que no está dibujada
-  const leyendaMeta = document.querySelector('.leyenda .meta');
+  const leyendaMeta = opc.leyenda !== undefined ? opc.leyenda : document.querySelector('.leyenda .meta');
   if (leyendaMeta) leyendaMeta.style.display = metaVisible ? '' : 'none';
 
   // ── el día de hoy ──
@@ -1220,11 +1797,53 @@ document.addEventListener('keydown', e => {
   }
   if (k === "m"){ silencio = !silencio; if (silencio) callar(); }
   if (k === "p") intentarPropaganda();   // ver la propaganda sin esperar el turno
+  if (k === "i" && !informeCliente){
+    intentarInformes();                  // lo mismo con la ronda de informes
+    // Sin esto, el escucha de abajo tomaría esta misma tecla como alguien que
+    // está leyendo y convertiría la ronda en un informe abierto a mano.
+    e.stopImmediatePropagation();
+    return;
+  }
+  if (e.key === 'Escape' && informeCliente){ cerrarInforme(); return; }
+  // 1 a 5 abren el informe de cada cliente en el orden de Fuentes, que es el de
+  // las tarjetas. Sirve en el televisor, donde hay teclado pero no siempre mouse.
+  // La misma tecla otra vez lo cierra.
+  if (/^[1-9]$/.test(e.key) && estado.datos){
+    const c = (estado.datos.clientes || [])[Number(e.key) - 1];
+    if (c){
+      if (informeCliente === c.cliente) cerrarInforme();
+      else abrirInforme(c.cliente);
+    }
+  }
   if (k === 'f'){
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen().catch(()=>{});
   }
 });
+
+// Las tarjetas de cliente se recrean cuando cambian los datos. El clic se escucha
+// en la lista y no en cada tarjeta: así nunca queda una tarjeta nueva sin escuchar.
+$('#clientes').addEventListener('click', e => {
+  const li = e.target.closest('li[data-cliente]');
+  if (li) abrirInforme(li.dataset.cliente);
+});
+$('#clientes').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const li = e.target.closest('li[data-cliente]');
+  if (!li) return;
+  e.preventDefault();
+  abrirInforme(li.dataset.cliente);
+});
+$('#iCerrar').addEventListener('click', cerrarInforme);
+// Cualquier señal de que alguien sigue mirando el informe aplaza el cierre solo.
+['pointermove', 'pointerdown', 'keydown', 'wheel'].forEach(ev =>
+  document.addEventListener(ev, () => {
+    if (!informeCliente) return;
+    // Si la ronda automática lo tenía abierto, quien lo toca se lo queda: deja de
+    // pasar al siguiente cliente y se cierra como uno abierto a mano.
+    if (informeAuto){ informeAuto = false; marcarManual(); }
+    reiniciarCierreInforme();
+  }, { passive: true }));
 
 /** Sin esto la pantalla del televisor se apaga sola a los pocos minutos. */
 async function mantenerDespierta(){
@@ -1267,6 +1886,8 @@ function encender(){
   mantenerDespierta();
   recargaDeMadrugada();
   arrancarPropaganda();
+  arrancarInformes();
+  arrancarDesliz();
   reloj(); setInterval(reloj, 20000);
   ['#kFacturado','#kProyectado','#kInversion'].forEach(s => pintarFlap($(s), pesos.format(0)));
   pintarFlap($('#kVentas'), '0');
