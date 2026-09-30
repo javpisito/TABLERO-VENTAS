@@ -756,6 +756,11 @@ const CONFIG = {
     'Alejandra': 20000000,
     'Susana':    30000000
   },
+  // Lo que se escribe en la columna vendedora cuando la venta no fue de nadie.
+  // Esas ventas siguen sumando en el cliente —son plata real— pero no aparecen
+  // como una vendedora más en el ranking ni en el informe. Se comparan sin
+  // mayúsculas, puntos, barras ni espacios: "N.A", "N/A", "n.a." y "NA" son lo mismo.
+  sinVendedora: ['N.A', 'No aplica', 'Sin vendedora', 'Ninguna'],
   horaRecarga: 4,          // recarga sola a esta hora, para que el TV no lleve semanas abierto
 
   // El informe de un cliente se cierra solo si nadie lo toca en este rato. En el
@@ -1133,16 +1138,22 @@ function pintarInforme(){
   // Suma lo del mes y cuenta ventas. El facturado por vendedora dentro de un
   // cliente pediría repetir aquí la regla de repartir(), y eso no se hace.
   const porVend = new Map();
+  let sinQuien = 0;
   ventas.forEach(v => {
-    const k = String(v.vendedora || '').trim() || 'Sin vendedora';
+    if (esSinVendedora(v.vendedora)){ sinQuien += Number(v.monto) || 0; return; }
+    const k = String(v.vendedora).trim();
     const o = porVend.get(k) || { monto: 0, n: 0 };
     o.monto += Number(v.monto) || 0;
     o.n++;
     porVend.set(k, o);
   });
   const vend = [...porVend].sort((a, b) => b[1].monto - a[1].monto);
-  $('#iVendResumen').textContent = vend.length
-    ? vend.length + (vend.length === 1 ? ' vendedora' : ' vendedoras') : '';
+  // Lo sin vendedora se nombra en el resumen: sin eso, los porcentajes de las
+  // filas no suman 100 y parece que falta plata.
+  $('#iVendResumen').textContent = [
+    vend.length ? vend.length + (vend.length === 1 ? ' vendedora' : ' vendedoras') : '',
+    sinQuien > 0 ? pesos.format(sinQuien) + ' sin vendedora' : ''
+  ].filter(Boolean).join(' · ');
   const MAX_VEND = 7;
   $('#iVendedoras').innerHTML = !vend.length
     ? '<div class="sinDatos">Sin ventas este mes.</div>'
@@ -1399,9 +1410,11 @@ function siguienteFiesta(){
   if (!v){ dibujar(); return; }
   estado.celebrando = true;
   $('#fiestaGrito').textContent = v.estado === 'Facturada' ? 'Venta facturada' : 'Venta agendada';
-  $('#fiestaQuien').textContent = v.vendedora;
+  // Una venta sin vendedora celebra al cliente: "N.A" en letras gigantes no es de nadie.
+  const sinQuien = esSinVendedora(v.vendedora);
+  $('#fiestaQuien').textContent = sinQuien ? v.cliente : v.vendedora;
   pintarFlap($('#fiestaCuanto'), pesos.format(v.monto));
-  $('#fiestaDetalle').textContent = [v.cliente, v.producto].filter(Boolean).join(' · ');
+  $('#fiestaDetalle').textContent = [sinQuien ? 'Sin vendedora' : v.cliente, v.producto].filter(Boolean).join(' · ');
   $('#fiesta').classList.add('viva');
   campana(v.vendedora); papelitos();
   setTimeout(() => {
@@ -1446,7 +1459,8 @@ function dibujar(){
   pintarClientes(clientes);
   if (informeCliente) pintarInforme();
 
-  const orden = (d.vendedoras || []);
+  // El puesto se cuenta sin las ventas sin vendedora: "N.A" no le quita el 07 a nadie.
+  const orden = (d.vendedoras || []).filter(v => !esSinVendedora(v.vendedora));
   $('#vacio').style.display = orden.length ? 'none' : 'block';
   const cont = $('#vPista');
   const antes = new Map();
@@ -1589,6 +1603,13 @@ function arrancarDesliz(){
  * La comparación de nombres ignora mayúsculas y espacios sobrantes porque los
  * nombres se escriben a mano en la hoja, igual que pasó con los estados.
  */
+/** ¿Esta "vendedora" es en realidad una venta sin vendedora? Ver CONFIG.sinVendedora. */
+function esSinVendedora(nombre){
+  const clave = x => String(x || '').toLowerCase().replace(/[\s.\/\-_]/g, '');
+  const k = clave(nombre);
+  return k === '' || (CONFIG.sinVendedora || []).some(x => clave(x) === k);
+}
+
 function metaDe(v){
   if (Number(v.metaMes) > 0) return Number(v.metaMes);
   const buscado = String(v.vendedora || '').trim().toLowerCase();

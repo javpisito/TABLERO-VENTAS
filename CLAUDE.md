@@ -237,6 +237,17 @@ sobre la proyección de la primera del ranking, así que la líder salía llena 
 y la barra repetía en dibujo lo que el orden de las filas ya decía. Ahora es el mismo
 lenguaje de la gráfica del mes: sólido lo facturado, claro lo que falta.
 
+**Una venta sin vendedora cuenta, pero no compite.** Decidido el 30 de septiembre de
+2026: la Dra. Dayan tenía 7 ventas con vendedora "N.A" ($ 1.350.000) y "N.A" salía en el
+ranking como una vendedora más. Esas ventas siguen sumando en el cliente, en la meta y en
+los totales —son plata real—, y la campana suena igual; lo que cambia es que no aparecen
+en el ranking ni en las vendedoras del informe, y la celebración muestra al cliente en vez
+de "N.A". El informe dice cuánto quedó "sin vendedora" para que los porcentajes cuadren.
+
+Se filtra en el HTML (`esSinVendedora()` y `CONFIG.sinVendedora`), no en el recolector:
+así no hubo que publicar versión, y `vendedoras[]` del JSON sigue diciendo lo que hay en la
+hoja. Se compara sin mayúsculas, puntos, barras ni espacios, así que "N/A" o "n.a." caen igual.
+
 Las metas viven provisionalmente en `CONFIG.metasVendedoras`, dentro del HTML. Deberían
 estar en la hoja como las de cliente, para que cambiarlas no sea desplegar código;
 `metaDe()` ya prefiere `metaMes` del JSON, así que moverlas allá no obliga a tocar el
