@@ -291,6 +291,25 @@ plata. Por eso el ranking de vendedoras ordena por proyectado, no por la suma.
 **El alcance de Meta no se suma** entre días ni entre clientes: las mismas personas ven
 la pauta varios días. Se muestra por cliente o no se muestra.
 
+Se volvió a preguntar el 29 de septiembre de 2026, cuando se pidió ver alcance,
+impresiones y frecuencia "de todas las cuentas", y **se confirmó**: Meta no deduplica
+entre cuentas publicitarias distintas, así que un alcance sumado cuenta dos veces a quien
+vio la pauta de Dayan y la de Daniela, y la frecuencia sacada de ese total sale más baja
+de lo real. El total de todas las cuentas lleva inversión e impresiones, que sí se suman,
+y el CPM que sale de ellas. El alcance y la frecuencia van por empresa.
+
+**La pauta en Meta tiene su pantalla.** Pedido el 29 de septiembre de 2026. Es el mismo
+`#informe` con la clase `.esPauta`, abierto con la tarjeta de Inversión o la tecla 0: cuatro
+indicadores de todas las cuentas y una fila por empresa con inversión, alcance, impresiones,
+frecuencia y CPM. Entra en la ronda automática después de los cinco clientes, solo si
+`metaConectada`. No se agregó al tablero principal a propósito: son cinco indicadores
+para leerse a tres metros. Además, cada informe de cliente lleva un panel con las cuatro
+cifras de su cuenta.
+
+Si el JSON no trae `impresiones` —un recolector anterior a este cambio— la pantalla lo
+dice ("falta actualizar el recolector") en vez de pintar ceros, que se leerían como
+pauta apagada.
+
 **La recolección tiene horario** (`HORARIO` en `recolector.js`, 6:00 a 21:00 de lunes a
 sábado). Abrir cinco hojas 1.440 veces al día se come la cuota diaria de tiempo de
 ejecución de Apps Script, y de madrugada nadie registra ventas. El disparador sigue
@@ -369,13 +388,18 @@ JSON que devuelve `doGet`:
   "mes": "agosto 2026",
   "dia": 21,
   "diasDelMes": 31,
-  "totales": { "facturado": 0, "proyectado": 0, "inversion": 0 },
-  "clientes":   [{ "cliente": "", "facturado": 0, "proyectado": 0, "ventas": 0, "inversion": 0, "metaMes": 0 }],
+  "totales": { "facturado": 0, "proyectado": 0, "inversion": 0, "impresiones": 0 },
+  "clientes":   [{ "cliente": "", "facturado": 0, "proyectado": 0, "ventas": 0, "inversion": 0, "metaMes": 0,
+                   "alcance": 0, "impresiones": 0, "frecuencia": 0 }],
   "vendedoras": [{ "vendedora": "", "facturado": 0, "proyectado": 0, "ventas": 0 }],
   "ventas":     [{ "id": "", "cliente": "", "vendedora": "", "monto": 0, "estado": "", "producto": "", "ts": "", "dia": 18 }],
   "avisos": []
 }
 ```
+
+`alcance`, `impresiones` y `frecuencia` son de lo que va del mes en la cuenta de Meta de
+cada cliente. En `totales` hay `impresiones` y **no** hay `alcance`: no se suma entre
+cuentas (ver Decisiones).
 
 Los cuatro campos de arriba son de diagnóstico, no de negocio:
 

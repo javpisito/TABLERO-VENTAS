@@ -270,8 +270,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .cerrar:focus-visible{outline:3px solid var(--azul);outline-offset:3px}
 
 .kpis.seis{grid-template-columns:repeat(6,1fr)}
-#informe .baja{display:grid;grid-template-columns:1fr 1.4fr;gap:.95rem;min-height:0}
-#informe .baja.conProductos{grid-template-columns:1fr 1.4fr .9fr}
+#informe .baja{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:.95rem;min-height:0}
+#informe .baja.conProductos{grid-template-columns:1fr 1.15fr .95fr .85fr}
+#informe .baja.conProductos .citas{grid-template-columns:repeat(2,1fr)}
 
 /* Listas del informe: el mismo .fila del ranking, así se leen igual */
 .listaInforme{flex:1;display:flex;flex-direction:column;gap:.5rem;overflow:hidden;min-height:0}
@@ -311,6 +312,44 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .cita .que{font-size:.72rem;color:var(--humo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cita.mas{display:grid;place-items:center;font-family:'Martian Mono',monospace;
   font-size:.75rem;color:var(--humo);background:var(--azul-suave);box-shadow:none}
+
+/* ── Pauta en Meta ───────────────────────────────────────────────────────
+   Dentro del informe de un cliente es un panel de cuatro cifras. La vista de
+   todas las cuentas usa el mismo #informe con .esPauta: cambia el cuerpo y
+   conserva el encabezado, la barrita de la ronda y la forma de cerrarse. */
+.metricas{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:.75rem 1rem;align-content:center;min-height:0}
+.metrica span{display:block;font-family:'Martian Mono',monospace;font-size:.55rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--humo);margin-bottom:.2rem}
+.metrica b{display:block;font-family:'Martian Mono',monospace;font-size:1.15rem;color:var(--tinta);white-space:nowrap}
+.metrica small{display:block;font-size:.62rem;color:var(--humo);margin-top:.1rem}
+
+#informe.esPauta{grid-template-rows:auto auto minmax(0,1fr)}
+#informe:not(.esPauta) > .vistaPauta, #informe.esPauta > .soloCliente{display:none}
+.kpis.cuatro{grid-template-columns:repeat(4,1fr)}
+.empresas{flex:1;display:flex;flex-direction:column;gap:.55rem;min-height:0;overflow:hidden}
+.empresa{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(5,minmax(0,1fr));align-items:center;
+  gap:1rem;padding:.75rem 1.1rem;background:#fff;border-radius:14px;
+  box-shadow:4px 4px 10px rgba(163,177,198,.35), -3px -3px 8px rgba(255,255,255,.9)}
+/* Las filas crecen hasta llenar el panel: con cinco empresas sobraba media
+   pantalla y las cifras quedaban chicas para leerse desde el fondo. */
+.empresa:not(.cabeza){flex:1 1 0;max-height:7.5rem}
+.empresa.cabeza{background:none;box-shadow:none;padding:0 1.1rem}
+.empresa.cabeza > *, .empresa.cabeza .num{font-family:'Martian Mono',monospace;font-size:.52rem;font-weight:400;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--humo)}
+.empresa .quien{font-size:1.55rem;font-weight:800;font-variation-settings:'wdth' 112;text-transform:uppercase;
+  line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--tinta)}
+.empresa .barra{margin:.45rem 0 .35rem}
+.empresa .cierres{font-family:'Martian Mono',monospace;font-size:.62rem;color:var(--humo);letter-spacing:.06em}
+.empresa .num{font-family:'Martian Mono',monospace;font-weight:700;font-size:1.3rem;text-align:right;
+  white-space:nowrap;color:var(--tinta)}
+.empresa .num.tenue{color:var(--humo);font-weight:400}
+.notaPauta{flex:none;font-family:'Martian Mono',monospace;font-size:.55rem;color:var(--humo);
+  letter-spacing:.06em;margin-top:.7rem}
+
+/* La tarjeta de Inversión del tablero abre la vista de todas las cuentas */
+.kpi.abre{cursor:pointer;transition:transform .18s cubic-bezier(.2,.8,.2,1)}
+.kpi.abre:hover{transform:translateY(-3px)}
+.kpi.abre:focus-visible{outline:3px solid var(--azul);outline-offset:3px}
 
 /* ── Propaganda ──────────────────────────────────────────────────────────
    Toma la pantalla completa cada tantos minutos y pasa las láminas. Va en
@@ -405,10 +444,28 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
   footer{display:none}
   /* En el celular el informe sí puede desplazarse: ahí hay quien haga scroll */
   #informe{grid-template-rows:none;overflow-y:auto;padding:1.2rem}
-  #informe .kpis.seis{grid-template-columns:1fr 1fr}
+  #informe.esPauta{grid-template-rows:none}
+  /* minmax(0,…): con 1fr a secas la cifra más ancha estira su columna y la
+     página se sale de lado. Así la columna manda y encajarCifra achica el número. */
+  #informe .kpis.seis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #informe h2{white-space:normal;font-size:1.5rem}
+  #informe header .marca-bloque{flex-wrap:wrap;min-width:0;max-width:100%}
   #informe .baja,#informe .baja.conProductos{grid-template-columns:1fr}
   .graficoInforme{height:16rem;flex:none}
   .citas{grid-template-columns:1fr 1fr}
+  #informe .kpis.cuatro{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* En el celular cada empresa es una tarjeta: el nombre arriba y las cifras
+     en dos columnas, cada una con su rótulo porque ya no hay encabezado. */
+  /* flex:none: con flex:1 y un panel sin alto fijo, la lista mide cero y las
+     filas se desbordan encima de la nota. */
+  .empresas{overflow:visible;flex:none}
+  .empresa.cabeza{display:none}
+  .empresa{grid-template-columns:1fr 1fr;gap:.6rem 1rem}
+  .empresa:not(.cabeza){flex:none;max-height:none}
+  .empresa > :first-child{grid-column:1/-1}
+  .empresa .num{text-align:left}
+  .empresa .num::before{content:attr(data-rot);display:block;font-family:'Martian Mono',monospace;
+    font-size:.5rem;font-weight:400;letter-spacing:.2em;text-transform:uppercase;color:var(--humo)}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
 </style>
@@ -457,7 +514,8 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div class="flap cifra" id="kVentas"></div>
       <div class="pie" id="pieVentas">cerradas este mes</div>
     </div>
-    <div class="kpi">
+    <div class="kpi abre" id="kInversionCaja" tabindex="0" role="button"
+         aria-label="Ver la pauta en Meta de todas las cuentas">
       <div class="rotulo">Inversión</div>
       <div class="flap cifra" id="kInversion"></div>
       <div class="pie" id="pieInversion">pauta del mes</div>
@@ -508,7 +566,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
     </div>
   </header>
 
-  <div class="kpis seis">
+  <div class="kpis seis soloCliente">
     <div class="kpi fuerte">
       <div class="rotulo">Facturado</div>
       <div class="flap cifra" id="iFacturado"></div>
@@ -542,7 +600,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
     </div>
   </div>
 
-  <div class="cuerpo">
+  <div class="cuerpo soloCliente">
     <section class="panel">
       <div class="rotulo-col">Evolución del cliente</div>
       <div class="graficoInforme" id="iGrafico"></div>
@@ -558,7 +616,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
     </section>
   </div>
 
-  <div class="baja" id="iBaja">
+  <div class="baja soloCliente" id="iBaja">
     <section class="panel">
       <div class="rotulo-col">Camino a la meta</div>
       <div class="camino" id="iCamino"></div>
@@ -567,11 +625,44 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div class="rotulo-col">Próximas citas <em id="iCitasResumen"></em></div>
       <div class="citas" id="iCitas"></div>
     </section>
+    <section class="panel">
+      <div class="rotulo-col">Pauta en Meta <em id="iMetaResumen"></em></div>
+      <div class="metricas" id="iMetricas"></div>
+    </section>
     <section class="panel" id="iProductosPanel">
       <div class="rotulo-col">Productos</div>
       <div class="listaInforme" id="iProductos"></div>
     </section>
   </div>
+
+  <!-- Vista de todas las cuentas: se ve solo con #informe.esPauta -->
+  <div class="kpis cuatro vistaPauta">
+    <div class="kpi fuerte">
+      <div class="rotulo">Inversión</div>
+      <div class="flap cifra" id="pInversion"></div>
+      <div class="pie" id="pPieInversion"></div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Impresiones</div>
+      <div class="flap cifra" id="pImpresiones"></div>
+      <div class="pie" id="pPieImpresiones"></div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">CPM</div>
+      <div class="flap cifra" id="pCpm"></div>
+      <div class="pie">costo por mil impresiones</div>
+    </div>
+    <div class="kpi">
+      <div class="rotulo">Costo por venta</div>
+      <div class="flap cifra" id="pCostoVenta"></div>
+      <div class="pie" id="pPieCostoVenta"></div>
+    </div>
+  </div>
+  <section class="panel vistaPauta">
+    <div class="rotulo-col">Por empresa <em id="pResumen"></em></div>
+    <div class="empresas" id="pEmpresas"></div>
+    <div class="notaPauta">El alcance y la frecuencia son de cada cuenta y no se suman entre ellas: la misma persona pudo ver la pauta de varias.</div>
+  </section>
 </div>
 
 <!-- Propaganda. Va por debajo de #fiesta a propósito: si por lo que sea las dos
@@ -586,7 +677,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
 </div>
 <div id="papelitos"></div>
 
-<footer>T · venta de prueba &nbsp;|&nbsp; P · propaganda &nbsp;|&nbsp; 1–5 · informe de cliente &nbsp;|&nbsp; I · ronda de informes &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
+<footer>T · venta de prueba &nbsp;|&nbsp; P · propaganda &nbsp;|&nbsp; 1–5 · informe de cliente &nbsp;|&nbsp; 0 · pauta en Meta &nbsp;|&nbsp; I · ronda de informes &nbsp;|&nbsp; F · pantalla completa &nbsp;|&nbsp; M · silencio</footer>
 
 <script>
 /* ================================================================
@@ -705,6 +796,10 @@ const $ = s => document.querySelector(s);
 // Para lo que entra a innerHTML desde la hoja: nombres y productos se escriben a mano.
 const esc = s => String(s).replace(/[&<>"']/g, ch =>
   ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[ch]);
+// Impresiones y alcance van completos y no en millones: son cantidades de
+// personas y de vistas, y "0,1 M" de alcance no le dice nada a nadie.
+const numero = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+const decimal = x => x.toFixed(2).replace('.', ',');
 const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ================================================================
@@ -852,6 +947,20 @@ function recibir(datos){
 // se cierra — la ronda a los informePorClienteMs, la persona cuando deja de tocarlo —
 // y si la venta que entra se lo lleva por delante.
 let informeCliente = null, informeReloj = null, informeAuto = false, informeTurno = 0;
+// La vista de todas las cuentas viaja como un "cliente" más, para heredar la
+// apertura, el cierre solo y la ronda. El carácter nulo hace imposible que un
+// nombre escrito en Fuentes choque con ella.
+const PAUTA = '\u0000pauta';
+
+/** Lo que pasa en la ronda: cada cliente y, si Meta está conectada, todas las cuentas. */
+function turnosDeRonda(){
+  const d = estado.datos || {};
+  const t = (d.clientes || []).map(c => c.cliente);
+  if (d.metaConectada) t.push(PAUTA);
+  return t;
+}
+
+function rotuloDe(nombre){ return nombre === PAUTA ? 'Pauta en Meta' : 'Informe'; }
 
 function abrirInforme(nombre, auto){
   if (!estado.datos) return;
@@ -861,6 +970,7 @@ function abrirInforme(nombre, auto){
   cerrarPropaganda();          // si estaba pasando, que se vea lo que se pidió
   const caja = $('#informe');
   caja.classList.add('viva');
+  caja.classList.toggle('esPauta', nombre === PAUTA);
   pintarInforme();
   if (!informeCliente) return;   // el cliente ya no está en los datos y se cerró
   // Pasar de un cliente a otro con el informe ya abierto no dispara la entrada
@@ -875,9 +985,8 @@ function abrirInforme(nombre, auto){
   clearTimeout(informeReloj);
   informeReloj = null;
   if (informeAuto){
-    const clientes = estado.datos.clientes || [];
-    const n = clientes.findIndex(c => c.cliente === nombre) + 1;
-    $('#iPastilla').textContent = 'Informe · ' + n + ' de ' + clientes.length;
+    const turnos = turnosDeRonda();
+    $('#iPastilla').textContent = rotuloDe(nombre) + ' · ' + (turnos.indexOf(nombre) + 1) + ' de ' + turnos.length;
     animarAvance();
   } else {
     marcarManual();
@@ -899,7 +1008,8 @@ function cerrarInforme(){
   // devolvérselo le pintaría el contorno de foco en el televisor.
   if (eraAuto) return;
   // El foco vuelve a la tarjeta desde donde se abrió, para seguir con el teclado.
-  const li = $('#clientes').querySelector(`[data-cliente="${CSS.escape(quien)}"]`);
+  const li = quien === PAUTA ? $('#kInversionCaja')
+    : $('#clientes').querySelector(`[data-cliente="${CSS.escape(quien)}"]`);
   if (li) li.focus({ preventScroll: true });
 }
 
@@ -910,7 +1020,7 @@ function reiniciarCierreInforme(){
 
 /** Quita lo que solo tiene sentido en la ronda: la cuenta "2 de 5" y la barrita. */
 function marcarManual(){
-  $('#iPastilla').textContent = 'Informe';
+  $('#iPastilla').textContent = rotuloDe(informeCliente);
   $('#iAvance').getAnimations().forEach(a => a.cancel());
 }
 
@@ -936,20 +1046,20 @@ function arrancarInformes(){
 
 function intentarInformes(){
   if (estado.celebrando || estado.cola.length || propagandaViva || informeCliente) return;
-  if (!estado.datos || !(estado.datos.clientes || []).length) return;
+  if (!estado.datos || !turnosDeRonda().length) return;
   let quedan = Math.max(1, CONFIG.informesPorRonda || 1);
   const paso = () => {
     // Se relee en cada paso: los datos se refrescan cada minuto y un cliente
     // pudo salir de Fuentes a mitad de la ronda.
-    const clientes = (estado.datos && estado.datos.clientes) || [];
-    if (!quedan || !clientes.length || (informeCliente && !informeAuto)){
+    const turnos = turnosDeRonda();
+    if (!quedan || !turnos.length || (informeCliente && !informeAuto)){
       if (informeAuto) cerrarInforme();
       return;
     }
-    quedan = Math.min(quedan, clientes.length) - 1;
-    const c = clientes[informeTurno % clientes.length];
+    quedan = Math.min(quedan, turnos.length) - 1;
+    const quien = turnos[informeTurno % turnos.length];
     informeTurno++;
-    abrirInforme(c.cliente, true);
+    abrirInforme(quien, true);
     informeReloj = setTimeout(paso, CONFIG.informePorClienteMs);
   };
   paso();
@@ -971,6 +1081,7 @@ function intentarInformes(){
 function pintarInforme(){
   const d = estado.datos;
   if (!d || !informeCliente) return;
+  if (informeCliente === PAUTA){ pintarPauta(d); return; }
   const c = (d.clientes || []).find(x => x.cliente === informeCliente);
   if (!c){ cerrarInforme(); return; }   // lo sacaron de Fuentes con el informe abierto
 
@@ -1098,6 +1209,24 @@ function pintarInforme(){
         </div>`).join('')
       + (citas.length > MAX_CITAS ? `<div class="cita mas">+${citas.length - MAX_CITAS + 1} más</div>` : '');
 
+  // ── pauta en Meta del cliente ──
+  // El alcance es de esta cuenta y de lo que va del mes, deduplicado por Meta:
+  // aquí sí es cierto. Lo que no se hace es sumarlo con el de otra cuenta.
+  const alc = Number(c.alcance) || 0, imp = Number(c.impresiones) || 0;
+  const frec = Number(c.frecuencia) || (alc > 0 ? imp / alc : 0);
+  const sinMetricas = texto => '<div class="sinDatos" style="grid-column:1/-1">' + texto + '</div>';
+  $('#iMetaResumen').textContent = imp > 0 ? 'del 1 a hoy' : '';
+  $('#iMetricas').innerHTML = !d.metaConectada ? sinMetricas('Meta sin conectar.')
+    // Un recolector viejo manda la inversión pero no esto: se dice, no se pinta en cero.
+    : c.impresiones == null ? sinMetricas('El alcance y las impresiones llegan cuando se actualice el recolector.')
+    : imp <= 0 ? sinMetricas('Esta cuenta no ha tenido pauta este mes.')
+    : [
+        ['Alcance', numero.format(alc), 'personas distintas'],
+        ['Impresiones', numero.format(imp), 'veces que se vio un anuncio'],
+        ['Frecuencia', frec > 0 ? decimal(frec) : '—', 'veces por persona'],
+        ['CPM', pesos.format(Math.round(pauta / imp * 1000)), 'costo por mil impresiones']
+      ].map(([r, v, n]) => `<div class="metrica"><span>${r}</span><b>${esc(v)}</b><small>${n}</small></div>`).join('');
+
   // ── productos, solo si el cliente los llena ──
   // Casi nadie llena esa columna: un panel vacío en cuatro de cinco clientes sería
   // ruido, así que solo aparece cuando hay algo que mostrar.
@@ -1127,6 +1256,67 @@ function pintarInforme(){
         </div>`;
       }).join('');
   }
+}
+
+/**
+ * Todas las cuentas juntas. Inversión e impresiones se suman: son plata y vistas,
+ * y una vista de una cuenta no es la misma que una de otra. El alcance no — la
+ * misma persona pudo ver la pauta de Dayan y la de Daniela, y Meta no deduplica
+ * entre cuentas distintas —, así que el alcance y la frecuencia salen por empresa
+ * y el total no existe. Decidido con el analista el 29 de septiembre de 2026.
+ */
+function pintarPauta(d){
+  const cl = d.clientes || [];
+  const dias = Number(d.diasDelMes) || 30;
+  const hoy = Math.min(Math.max(Number(d.dia) || 1, 1), dias);
+  $('#iNombre').textContent = 'Todas las cuentas';
+  $('#iMes').textContent = d.mes || '';
+  $('#iDia').textContent = 'día ' + hoy + ' de ' + dias;
+
+  const inv = Number(d.totales && d.totales.inversion) || 0;
+  const traeMetricas = cl.some(c => c.impresiones != null);
+  const imp = !traeMetricas ? 0
+    : d.totales && d.totales.impresiones != null ? Number(d.totales.impresiones) || 0
+    : cl.reduce((s, c) => s + (Number(c.impresiones) || 0), 0);
+  const ventas = cl.reduce((s, c) => s + (Number(c.ventas) || 0), 0);
+  const conPauta = cl.filter(c => Number(c.inversion) > 0).length;
+
+  pintarFlap($('#pInversion'), pesos.format(inv));
+  $('#pPieInversion').textContent = !d.metaConectada ? 'Meta sin conectar'
+    : conPauta + (conPauta === 1 ? ' cuenta con pauta' : ' cuentas con pauta') + ' este mes';
+  pintarFlap($('#pImpresiones'), traeMetricas ? numero.format(imp) : '—');
+  $('#pPieImpresiones').textContent = traeMetricas ? 'sumadas entre todas las cuentas' : 'falta actualizar el recolector';
+  pintarFlap($('#pCpm'), imp > 0 ? pesos.format(Math.round(inv / imp * 1000)) : '—');
+  pintarFlap($('#pCostoVenta'), inv > 0 && ventas > 0 ? pesos.format(Math.round(inv / ventas)) : '—');
+  $('#pPieCostoVenta').textContent = 'pauta sobre ' + ventas + (ventas === 1 ? ' venta' : ' ventas') + ' del mes';
+  ['#pInversion','#pImpresiones','#pCpm','#pCostoVenta'].forEach(s => encajarCifra($(s)));
+
+  $('#pResumen').textContent = traeMetricas ? 'del 1 a hoy, según Meta' : 'solo inversión: falta actualizar el recolector';
+  if (!d.metaConectada){
+    $('#pEmpresas').innerHTML = '<div class="sinDatos">Meta sin conectar: falta META_TOKEN en Propiedades del script.</div>';
+    return;
+  }
+  const guion = '<span class="num tenue">—</span>';
+  const celda = (rot, v) => `<span class="num" data-rot="${rot}">${esc(v)}</span>`;
+  const orden = cl.slice().sort((a, b) => (Number(b.inversion) || 0) - (Number(a.inversion) || 0));
+  $('#pEmpresas').innerHTML = `<div class="empresa cabeza"><span>Empresa</span><span class="num">Inversión</span>
+      <span class="num">Alcance</span><span class="num">Impresiones</span><span class="num">Frecuencia</span><span class="num">CPM</span></div>`
+    + orden.map(c => {
+        const i = Number(c.inversion) || 0, a = Number(c.alcance) || 0, m = Number(c.impresiones) || 0;
+        const f = Number(c.frecuencia) || (a > 0 ? m / a : 0);
+        const parte = inv > 0 ? i / inv * 100 : 0;
+        const n = Number(c.ventas) || 0;
+        return `<div class="empresa">
+          <div><div class="quien">${esc(c.cliente)}</div>
+            <div class="barra"><i class="hecho" style="width:${parte.toFixed(1)}%"></i></div>
+            <div class="cierres">${Math.round(parte)}% de la pauta · ${n} ${n === 1 ? 'venta' : 'ventas'}</div></div>
+          ${celda('Inversión', pesos.format(i))}
+          ${m > 0 ? celda('Alcance', numero.format(a)) : guion}
+          ${m > 0 ? celda('Impresiones', numero.format(m)) : guion}
+          ${m > 0 && f > 0 ? celda('Frecuencia', decimal(f)) : guion}
+          ${m > 0 ? celda('CPM', pesos.format(Math.round(i / m * 1000))) : guion}
+        </div>`;
+      }).join('');
 }
 
 /* ================================================================
@@ -1733,7 +1923,11 @@ const DEMO = {
   metas:{'Dayan':20000000,'Daniela':15000000,'Cucalón':30000000,
          'Autonal':80000000,'Decotienda':10000000},
   vendedoras:['Manuela','Susana','Valentina'],
-  productos:['Plan mensual','Paquete premium','Sesión única']
+  productos:['Plan mensual','Paquete premium','Sesión única'],
+  // Pauta de mentira para ver la vista de todas las cuentas sin tocar Meta:
+  // [inversión, alcance, impresiones]. Autonal en cero, para ver una cuenta sin pauta.
+  pauta:{'Dayan':[6800000,41200,118500],'Daniela':[5200000,35800,84300],'Cucalón':[1600000,14900,31200],
+         'Autonal':[0,0,0],'Decotienda':[640000,9800,17600]}
 };
 let demoN = 0;
 const demoVentas = [];
@@ -1771,8 +1965,11 @@ function repartirDemo(v){
 
 function armarDemo(){
   const porCliente = {}, porVendedora = {};
-  DEMO.clientes.forEach(c => porCliente[c] =
-    {cliente:c,facturado:0,proyectado:0,ventas:0,inversion:0,metaMes:DEMO.metas[c] || 0});
+  DEMO.clientes.forEach(c => {
+    const [inversion, alcance, impresiones] = DEMO.pauta[c] || [0, 0, 0];
+    porCliente[c] = {cliente:c,facturado:0,proyectado:0,ventas:0,metaMes:DEMO.metas[c] || 0,
+      inversion, alcance, impresiones, frecuencia: alcance > 0 ? impresiones / alcance : 0};
+  });
   demoVentas.forEach(v => {
     const plata = repartirDemo(v);
     const c = porCliente[v.cliente];
@@ -1786,13 +1983,14 @@ function armarDemo(){
     mes: MESES_ES[new Date().getMonth()] + ' ' + new Date().getFullYear(),
     latidoHaceMin: 0,
     dormido: false,
-    metaConectada: false,
+    metaConectada: true,
     dia: new Date().getDate(),
     diasDelMes: diasDelMes(new Date()),
     totales:{
       facturado:clientes.reduce((s,c)=>s+c.facturado,0),
       proyectado:clientes.reduce((s,c)=>s+c.proyectado,0),
-      inversion:0
+      inversion:clientes.reduce((s,c)=>s+c.inversion,0),
+      impresiones:clientes.reduce((s,c)=>s+c.impresiones,0)
     },
     clientes:clientes,
     vendedoras:Object.values(porVendedora).sort((a,b)=>(b.proyectado-a.proyectado)||(b.facturado-a.facturado)),
@@ -1838,6 +2036,10 @@ document.addEventListener('keydown', e => {
   // 1 a 5 abren el informe de cada cliente en el orden de Fuentes, que es el de
   // las tarjetas. Sirve en el televisor, donde hay teclado pero no siempre mouse.
   // La misma tecla otra vez lo cierra.
+  // 0 abre todas las cuentas, que no es un cliente y no tiene tarjeta propia.
+  if (e.key === '0' && estado.datos){
+    if (informeCliente === PAUTA) cerrarInforme(); else abrirInforme(PAUTA);
+  }
   if (/^[1-9]$/.test(e.key) && estado.datos){
     const c = (estado.datos.clientes || [])[Number(e.key) - 1];
     if (c){
@@ -1865,6 +2067,12 @@ $('#clientes').addEventListener('keydown', e => {
   abrirInforme(li.dataset.cliente);
 });
 $('#iCerrar').addEventListener('click', cerrarInforme);
+$('#kInversionCaja').addEventListener('click', () => abrirInforme(PAUTA));
+$('#kInversionCaja').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  abrirInforme(PAUTA);
+});
 // Cualquier señal de que alguien sigue mirando el informe aplaza el cierre solo.
 ['pointermove', 'pointerdown', 'keydown', 'wheel'].forEach(ev =>
   document.addEventListener(ev, () => {

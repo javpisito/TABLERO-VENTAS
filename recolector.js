@@ -22,7 +22,7 @@
  * el que dejó el disparador en la última corrida: si no coinciden es que el código
  * está guardado pero no publicado, que es la forma más común de perder una tarde.
  */
-var VERSION = '2026-08-21.6';
+var VERSION = '2026-09-30.1';
 
 var ZONA = 'America/Bogota';
 
@@ -291,7 +291,13 @@ function mayorConsecutivo(ids, prefijo){
    2. INVERSIÓN DESDE META  ·  fase 2
    ══════════════════════════════════════════════════════════════ */
 
-var API = 'v21.0';
+// Meta retira cada versión de la Graph API a los dos años y medio de sacarla.
+// v25.0 es de febrero de 2026 y expira el 29 de julio de 2028. La v21.0 con la
+// que se escribió esto expiraba el 21 de enero de 2027. Una versión vencida no
+// falla en silencio: Meta responde error y sale como aviso rojo en el televisor.
+// Al volver a subirla, revisa que spend, reach, impressions, frequency y actions
+// sigan existiendo en el nivel de cuenta, que es lo que aquí se pide.
+var API = 'v25.0';
 var TIPOS_INTERACCION = ['post_engagement',
                          'onsite_conversion.messaging_conversation_started_7d'];
 
@@ -304,7 +310,7 @@ function actualizarTrafico(){
   var fuentes = leerTabla(libro.getSheetByName('Fuentes'))
     .filter(function(f){ return String(f.activo).toLowerCase() === 'si' && f.cuenta_meta; });
 
-  var filas = [], avisos = [];
+  var filas = [], avisos = [], cuentas = {};
   var desde = Utilities.formatDate(inicioDelMes(), ZONA, 'yyyy-MM-dd');
   var hasta = Utilities.formatDate(new Date(), ZONA, 'yyyy-MM-dd');
 
@@ -312,7 +318,7 @@ function actualizarTrafico(){
     var cuenta = String(f.cuenta_meta).trim();
     if (cuenta.indexOf('act_') !== 0) cuenta = 'act_' + cuenta;
     var url = 'https://graph.facebook.com/' + API + '/' + cuenta + '/insights'
-            + '?fields=spend,reach,actions&level=account'
+            + '?fields=spend,reach,impressions,frequency,actions&level=account'
             + '&time_range=' + encodeURIComponent(JSON.stringify({ since: desde, until: hasta }))
             + '&access_token=' + encodeURIComponent(token);
     try{
@@ -324,9 +330,20 @@ function actualizarTrafico(){
         Logger.log(cuerpo.error.message);
         return;
       }
+      // Una cuenta sin gasto en el mes devuelve data vacía: queda todo en cero.
       var d = (cuerpo.data && cuerpo.data[0]) || {};
-      filas.push([f.cliente, Number(d.spend) || 0, Number(d.reach) || 0,
+      var alcance = Number(d.reach) || 0;
+      var impresiones = Number(d.impressions) || 0;
+      filas.push([f.cliente, Number(d.spend) || 0, alcance,
                   contarInteracciones(d.actions), new Date()]);
+      // Impresiones y frecuencia van en Propiedades y no en Trafico: esa pestaña ya
+      // existe y no se le agregan columnas visibles. doGet las lee de aquí.
+      cuentas[f.cliente] = {
+        alcance: alcance,
+        impresiones: impresiones,
+        // Meta la manda calculada; si no viene, es lo mismo que impresiones / alcance.
+        frecuencia: Number(d.frequency) || (alcance > 0 ? impresiones / alcance : 0)
+      };
     } catch (err){
       avisos.push('No pude consultar la inversión de ' + f.cliente);
     }
@@ -335,6 +352,7 @@ function actualizarTrafico(){
   var hoja = libro.getSheetByName('Trafico');
   if (hoja.getLastRow() > 1) hoja.getRange(2, 1, hoja.getLastRow() - 1, 5).clearContent();
   if (filas.length) hoja.getRange(2, 1, filas.length, 5).setValues(filas);
+  props.setProperty('META_CUENTAS', JSON.stringify(cuentas));
   // Un token vencido falla en las cinco cuentas: el mismo aviso no se repite.
   props.setProperty('AVISO_META', unicos(avisos).join(' · '));
 }
@@ -423,6 +441,13 @@ function doGet(e){
     .filter(function(f){ return String(f.activo).toLowerCase() === 'si'; });
   var trafico = leerTabla(libro.getSheetByName('Trafico'));
 
+  // Alcance, impresiones y frecuencia de cada cuenta, que deja actualizarTrafico.
+  // Queda en null mientras esa función no haya corrido con esta versión, y
+  // entonces los campos no se mandan: el televisor dice que faltan en vez de
+  // pintar ceros, que se leerían como pauta apagada.
+  var metricasMeta = null;
+  try{ metricasMeta = JSON.parse(props.getProperty('META_CUENTAS') || 'null'); } catch (err){}
+
   // Se agrupa por el PREFIJO del id (CUC-000001 → CUC), no por el nombre. El nombre
   // se cambia en Fuentes cuando se les da la gana — "Dr Jacobo" pasó a "Dr. Jacobo
   // Cucalón" — y las filas viejas del Registro quedaban huérfanas: el cliente
@@ -432,7 +457,7 @@ function doGet(e){
     var mias = delMes.filter(function(r){ return prefijoDe(r.id) === pref; });
     var t = trafico.filter(function(x){ return x.cliente === f.cliente; })[0];
     var plata = sumarReparto(mias, hoy, zonaHoja);
-    return {
+    var c = {
       cliente: f.cliente,
       facturado: plata.facturado,
       proyectado: plata.proyectado,
@@ -440,6 +465,15 @@ function doGet(e){
       inversion: t ? Number(t.inversion) || 0 : 0,
       metaMes: Number(f.meta_mes) || 0
     };
+    if (metricasMeta){
+      // Un cliente sin cuenta_meta, o cuya consulta falló, queda en cero; la
+      // consulta fallida ya salió como aviso rojo desde actualizarTrafico.
+      var m = metricasMeta[f.cliente] || {};
+      c.alcance = Number(m.alcance) || 0;
+      c.impresiones = Number(m.impresiones) || 0;
+      c.frecuencia = Math.round((Number(m.frecuencia) || 0) * 100) / 100;
+    }
+    return c;
   });
 
   var porVendedora = {};
@@ -484,6 +518,17 @@ function doGet(e){
               + VERSION + '): falta publicar una versión nueva');
   }
 
+  var totales = {
+    facturado: clientes.reduce(function(s, c){ return s + c.facturado; }, 0),
+    proyectado: clientes.reduce(function(s, c){ return s + c.proyectado; }, 0),
+    inversion: clientes.reduce(function(s, c){ return s + c.inversion; }, 0)
+  };
+  // Las impresiones sí se suman entre cuentas. El alcance NO: la misma persona pudo
+  // ver la pauta de dos clientes y Meta no deduplica entre cuentas distintas.
+  if (metricasMeta){
+    totales.impresiones = clientes.reduce(function(s, c){ return s + c.impresiones; }, 0);
+  }
+
   return responder({
     version: VERSION,                                  // la publicada, la que sirve esto
     versionRecolector: versionDisparador,              // la que corre el disparador
@@ -501,11 +546,7 @@ function doGet(e){
     // ahí fue donde se coló el corrimiento de zona la vez pasada.
     dia: Number(hoy.slice(-2)),
     diasDelMes: diasDelMes(ahora, ZONA),
-    totales: {
-      facturado: clientes.reduce(function(s, c){ return s + c.facturado; }, 0),
-      proyectado: clientes.reduce(function(s, c){ return s + c.proyectado; }, 0),
-      inversion: clientes.reduce(function(s, c){ return s + c.inversion; }, 0)
-    },
+    totales: totales,
     clientes: clientes,
     vendedoras: vendedoras,
     ventas: delMes.map(function(r){
