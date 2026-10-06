@@ -297,7 +297,15 @@ Todo esto vive en `repartir()` y en ningún otro lado. Si la regla cambia, se ca
 
 **Facturado y proyectado nunca se suman entre sí.** No porque sean incompatibles, sino
 porque lo facturado ya está adentro de lo proyectado: sumarlos cuenta dos veces la misma
-plata. Por eso el ranking de vendedoras ordena por proyectado, no por la suma.
+plata. Por eso el ranking de vendedoras ordena por una de las dos, nunca por la suma.
+
+**El ranking de vendedoras va por lo facturado.** Cambiado el 6 de octubre de 2026 a
+pedido del analista: ordenaba por proyectado, y una vendedora con muchas citas agendadas
+lideraba sin haber cobrado nada. Ahora la cifra grande de cada fila es lo facturado, el
+proyectado va en la línea chica, y el orden es facturado con el proyectado de desempate.
+El servidor sigue mandando `vendedoras[]` ordenado por proyectado; el orden se decide en
+`dibujar()`. Las vendedoras dentro del informe de un cliente siguen por el total del mes,
+porque el facturado por vendedora y cliente obligaría a repetir `repartir()` en el HTML.
 
 **El alcance de Meta no se suma** entre días ni entre clientes: las mismas personas ven
 la pauta varios días. Se muestra por cliente o no se muestra.

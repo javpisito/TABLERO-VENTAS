@@ -1460,13 +1460,19 @@ function dibujar(){
   if (informeCliente) pintarInforme();
 
   // El puesto se cuenta sin las ventas sin vendedora: "N.A" no le quita el 07 a nadie.
-  const orden = (d.vendedoras || []).filter(v => !esSinVendedora(v.vendedora));
+  // El ranking va por lo FACTURADO, lo que ya se hizo efectivo; el proyectado
+  // desempata. Pedido el 6 de octubre de 2026: antes ordenaba por proyectado, y
+  // una vendedora con muchas citas agendadas lideraba sin haber cobrado nada.
+  // El servidor sigue mandando vendedoras[] ordenado por proyectado: el orden se
+  // decide aquí, que es donde se pinta.
+  const orden = (d.vendedoras || []).filter(v => !esSinVendedora(v.vendedora))
+    .slice().sort((a, b) => (b.facturado - a.facturado) || (b.proyectado - a.proyectado));
   $('#vacio').style.display = orden.length ? 'none' : 'block';
   const cont = $('#vPista');
   const antes = new Map();
   [...cont.children].forEach(el => antes.set(el.dataset.quien, el.getBoundingClientRect().top));
   // Lo facturado ya está adentro de lo proyectado: sumarlos contaría dos veces la
-  // misma plata. El ranking va por el total del mes de cada una.
+  // misma plata. Por eso cada cifra va sola, con su rótulo.
   const vistos = new Set();
 
   orden.forEach((v, i) => {
@@ -1479,7 +1485,7 @@ function dibujar(){
         <div class="nb"><div class="nombre"></div>
           <div class="barra"><i class="hecho"></i><i class="porvenir"></i></div>
           <div class="cierres"></div></div>
-        <div class="der"><div class="rot">proyectado</div><div class="flap monto"></div></div>`;
+        <div class="der"><div class="rot">facturado</div><div class="flap monto"></div></div>`;
       cont.appendChild(fila);
     }
     vistos.add(v.vendedora);
@@ -1499,10 +1505,10 @@ function dibujar(){
 
     fila.querySelector('.cierres').textContent = [
       v.ventas + (v.ventas === 1 ? ' venta' : ' ventas'),
-      pesos.format(v.facturado) + ' facturado',
+      pesos.format(v.proyectado) + ' proyectado',
       meta > 0 ? Math.round((v.facturado / meta) * 100) + '% de meta' : 'sin meta'
     ].join(' · ');
-    pintarFlap(fila.querySelector('.monto'), pesos.format(v.proyectado));
+    pintarFlap(fila.querySelector('.monto'), pesos.format(v.facturado));
     encajarCifra(fila.querySelector('.monto'));
     fila.classList.toggle('lider', i === 0);
     cont.appendChild(fila);
