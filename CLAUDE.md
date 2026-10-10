@@ -139,6 +139,14 @@ Cada lámina puede llevar su propio tiempo (`{ ruta, ms }` en `CONFIG.propaganda
 no lo diga se queda `propagandaPorLaminaMs`. Las primeras piezas reales entraron el 10 de
 octubre de 2026: el reto de ventas (20 s) y el reto de Manuela (10 s).
 
+**Las fotos de personas no van al repositorio.** Una lámina puede llevar `foto` (centro y
+diámetro en porcentaje de la pieza) y el tablero la pinta en un círculo encima. Las fotos
+viven en `propaganda/fotos/`, que está en `.gitignore` como `audio/`: las piezas son
+publicidad hecha para verse, pero la cara de una vendedora publicada en internet es otra
+cosa y no la decide el código. En GitHub Pages la foto da 404 y la lámina sale sin el
+círculo; en el televisor hay que copiar la foto a mano. Si la persona acepta que sea
+pública, basta con sacarla de esa carpeta.
+
 El intervalo quedó en 5 minutos por pedido del analista el 29 de agosto de 2026,
 con la advertencia dicha: en una jornada de 8 horas son casi cien veces tapando
 las cifras, y una pantalla de trabajo que interrumpe tanto se deja de mirar. Es
@@ -213,10 +221,15 @@ azul sólido y el contraste intacto. Las variables son `--sombra`, `--sombra-azu
 `--hundido`. `--papel` bajó a `#EEF2F9`: la sombra clara necesita un fondo apenas más
 oscuro que el blanco para poder verse.
 
-**El vidrio sí se usa donde hay contenido detrás**: `#fiesta` y `#propaganda`, las dos
-pantallas completas. En la celebración el tablero entero se ve difuminado por detrás, que
-es exactamente para lo que sirve el efecto. En la propaganda el difuminado asoma en los
-bordes que la lámina no alcanza a cubrir, donde antes había un bloque plano.
+**El vidrio sí se usa donde hay contenido detrás**: `#fiesta`. En la celebración el
+tablero entero se ve difuminado por detrás, que es exactamente para lo que sirve el efecto.
+
+`#propaganda` también lo tuvo hasta el 10 de octubre de 2026. Con las primeras piezas
+reales (4:3, rosadas) en el televisor (16:9) quedaban dos bandas azul oscuro a los lados,
+y la pieza se leía como una imagen pegada encima del tablero. Ahora las franjas se llenan
+con la misma lámina ampliada y difuminada. Ese día apareció además un recorte: la lámina
+era una rejilla centrada, el `max-height:100%` del img no tenía contra qué medirse, y en
+16:9 una pieza 4:3 salía más alta que la pantalla y perdía arriba y abajo.
 
 El azul de la celebración se mantiene en 0.72 de opacidad: el contraste del blanco baja de
 5.17 a **3.24**. El nombre y el monto se pintan enormes, así que ahí sobra; los rótulos

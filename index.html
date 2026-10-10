@@ -355,23 +355,42 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
    Toma la pantalla completa cada tantos minutos y pasa las láminas. Va en
    z-index 60, debajo de la celebración: si entra una venta mientras corre, la
    venta manda y esto se cierra. */
-/* Vidrio: el fondo deja ver el tablero difuminado por detrás. Solo se nota en
-   los bordes que la lámina no alcanza a cubrir, pero es justo donde antes había
-   un bloque negro plano. El efecto sirve acá porque hay algo detrás que
-   difuminar; sobre el fondo liso del tablero no serviría de nada. */
+/* Las franjas que la lámina no cubre se llenan con la misma lámina, ampliada y
+   difuminada. Las piezas vienen en 4:3 y el televisor es 16:9: con el vidrio
+   azul de antes quedaban dos bandas oscuras al lado de una pieza rosada, y se
+   leía como una imagen pegada encima del tablero. Con su propio color de fondo
+   la pieza parece ocupar toda la pantalla. El fondo opaco es solo respaldo. */
 #propaganda{position:fixed;inset:0;z-index:60;display:none;overflow:hidden;
-  background:rgba(11,27,51,.55);
-  backdrop-filter:blur(24px) saturate(150%);
-  -webkit-backdrop-filter:blur(24px) saturate(150%)}
+  background:var(--tinta)}
 #propaganda.viva{display:block}
 #propaganda .tira{display:flex;height:100%;width:100%;
   transition:transform .7s cubic-bezier(.2,.8,.2,1)}
 /* Sin padding: la propaganda sangra hasta el borde. El contain ya evita que la
    imagen se deforme, así que el margen solo restaba pantalla. */
-#propaganda .lamina{flex:0 0 100%;height:100%;display:grid;place-items:center}
+#propaganda .lamina{position:relative;overflow:hidden;flex:0 0 100%;height:100%;
+  container-type:size}
+/* Se sale de la lámina por todos lados: el difuminado aclara los bordes, y sin
+   ese margen se vería un marco borroso alrededor de la pantalla. */
+#propaganda .lamina::before{content:'';position:absolute;inset:-8%;
+  background:var(--fondo) center/cover no-repeat;filter:blur(48px) saturate(1.1)}
 /* contain y no cover: una pieza recortada por la mitad se ve como un error,
-   no como diseño. Que sobre fondo antes que perder parte de la imagen. */
-#propaganda img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+   no como diseño. Que sobre fondo antes que perder parte de la imagen.
+   .pieza es la caja exacta donde queda dibujada la imagen —lo más grande que
+   quepa con su proporción (--ar)—, para que la foto se ubique en porcentajes
+   de la pieza y caiga en el mismo lugar en cualquier pantalla. La lámina era
+   una rejilla centrada con max-height:100%, y ese 100% no tenía contra qué
+   medirse: en el 16:9 del televisor una pieza 4:3 salía más alta que la
+   pantalla y se recortaba arriba y abajo. */
+#propaganda .pieza{position:absolute;left:50%;top:50%;translate:-50% -50%;
+  width:min(100cqw, calc(100cqh * var(--ar, 1.7778)));aspect-ratio:var(--ar, 1.7778)}
+#propaganda .pieza > img{width:100%;height:100%;display:block}
+/* La foto de una persona, en círculo, encima de la pieza. Borde crema y un
+   aro fino del terracota de las piezas, para que parezca parte del diseño y
+   no una foto pegada. */
+#propaganda .pieza > .foto{position:absolute;left:var(--x);top:var(--y);width:var(--d);
+  height:auto;aspect-ratio:1;translate:-50% -50%;border-radius:50%;object-fit:cover;
+  border:.45cqh solid #F7ECE7;
+  box-shadow:0 0 0 .25cqh #B57263, 0 1.2cqh 3cqh rgba(92,52,42,.22)}
 
 /* Vidrio en la celebración: el tablero se ve difuminado por detrás. Es donde el
    efecto tiene sentido, porque hay contenido que refractar — sobre el fondo liso
@@ -705,9 +724,15 @@ const CONFIG = {
   // se descarta sola, así que se puede quitar el archivo sin tocar el código.
   // Cada lámina puede ser solo la ruta, o { ruta, ms } si necesita su propio
   // tiempo; la que no lo diga se queda propagandaPorLaminaMs.
+  //
+  // `foto` pone la foto de una persona en un círculo encima de la pieza: x e y
+  // son el centro y d el diámetro, en porcentaje del ancho/alto de la pieza.
+  // Las fotos van en propaganda/fotos/, que NO entra al repo (es público): en
+  // GitHub Pages dan 404 y la lámina sale sin foto, igual que las canciones.
   propaganda: [
     { ruta: 'propaganda/reto-de-ventas.webp', ms: 20000 },
-    { ruta: 'propaganda/reto-manuela.webp',   ms: 10000 }
+    { ruta: 'propaganda/reto-manuela.webp',   ms: 10000,
+      foto: { ruta: 'propaganda/fotos/manuela.jpg', x: 27.05, y: 22.8, d: 16.5 } }
   ],
   // Cada cuánto arranca una ronda. Se dejó en 5 minutos por pedido del analista,
   // sabiendo que en una jornada de 8 horas son casi cien veces tapando las
@@ -1346,11 +1371,22 @@ let propagandaReloj = null;
 function prepararPropaganda(){
   propagandaLaminas = [];
   (CONFIG.propaganda || []).forEach((p, i) => {
-    const lamina = typeof p === 'string' ? { ruta: p } : p;
+    const lamina = Object.assign({}, typeof p === 'string' ? { ruta: p } : p);
     const img = new Image();
     // El índice conserva el orden de CONFIG aunque carguen desordenadas.
-    img.addEventListener('load', () => { propagandaLaminas[i] = lamina; });
+    img.addEventListener('load', () => {
+      lamina.ar = img.naturalWidth / img.naturalHeight;
+      propagandaLaminas[i] = lamina;
+    });
     img.src = lamina.ruta;
+    // La foto es opcional: si no carga, la lámina sale igual, sin el círculo.
+    if (lamina.foto){
+      const foto = lamina.foto;
+      lamina.foto = null;
+      const f = new Image();
+      f.addEventListener('load', () => { lamina.foto = foto; });
+      f.src = foto.ruta;
+    }
   });
 }
 
@@ -1372,7 +1408,12 @@ function intentarPropaganda(){
 
 function correrPropaganda(laminas){
   const caja = $('#propaganda'), tira = caja.querySelector('.tira');
-  tira.innerHTML = laminas.map(l => '<div class="lamina"><img src="' + l.ruta + '" alt=""></div>').join('');
+  tira.innerHTML = laminas.map(l => {
+    const f = l.foto;
+    const foto = f ? '<img class="foto" src="' + f.ruta + '" alt="" style="--x:' + f.x + '%;--y:' + f.y + '%;--d:' + f.d + '%">' : '';
+    return '<div class="lamina" style="--fondo:url(\'' + l.ruta + '\')">' +
+      '<div class="pieza" style="--ar:' + l.ar + '"><img src="' + l.ruta + '" alt="">' + foto + '</div></div>';
+  }).join('');
   const dura = l => l.ms || CONFIG.propagandaPorLaminaMs;
 
   tira.style.transition = 'none';
