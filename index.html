@@ -703,10 +703,11 @@ const CONFIG = {
   //
   // El orden de esta lista es el orden en que se pasan. Una imagen que no cargue
   // se descarta sola, así que se puede quitar el archivo sin tocar el código.
+  // Cada lámina puede ser solo la ruta, o { ruta, ms } si necesita su propio
+  // tiempo; la que no lo diga se queda propagandaPorLaminaMs.
   propaganda: [
-    'propaganda/1.jpg',
-    'propaganda/2.jpg',
-    'propaganda/3.jpg'
+    { ruta: 'propaganda/reto-de-ventas.webp', ms: 20000 },
+    { ruta: 'propaganda/reto-manuela.webp',   ms: 10000 }
   ],
   // Cada cuánto arranca una ronda. Se dejó en 5 minutos por pedido del analista,
   // sabiendo que en una jornada de 8 horas son casi cien veces tapando las
@@ -1344,11 +1345,12 @@ let propagandaReloj = null;
  */
 function prepararPropaganda(){
   propagandaLaminas = [];
-  (CONFIG.propaganda || []).forEach((ruta, i) => {
+  (CONFIG.propaganda || []).forEach((p, i) => {
+    const lamina = typeof p === 'string' ? { ruta: p } : p;
     const img = new Image();
     // El índice conserva el orden de CONFIG aunque carguen desordenadas.
-    img.addEventListener('load', () => { propagandaLaminas[i] = ruta; });
-    img.src = ruta;
+    img.addEventListener('load', () => { propagandaLaminas[i] = lamina; });
+    img.src = lamina.ruta;
   });
 }
 
@@ -1370,7 +1372,8 @@ function intentarPropaganda(){
 
 function correrPropaganda(laminas){
   const caja = $('#propaganda'), tira = caja.querySelector('.tira');
-  tira.innerHTML = laminas.map(r => '<div class="lamina"><img src="' + r + '" alt=""></div>').join('');
+  tira.innerHTML = laminas.map(l => '<div class="lamina"><img src="' + l.ruta + '" alt=""></div>').join('');
+  const dura = l => l.ms || CONFIG.propagandaPorLaminaMs;
 
   tira.style.transition = 'none';
   tira.style.transform = 'translateX(0)';
@@ -1386,9 +1389,9 @@ function correrPropaganda(laminas){
     i++;
     if (i >= laminas.length){ cerrarPropaganda(); return; }
     tira.style.transform = 'translateX(-' + (i * 100) + '%)';
-    propagandaReloj = setTimeout(paso, CONFIG.propagandaPorLaminaMs);
+    propagandaReloj = setTimeout(paso, dura(laminas[i]));
   };
-  propagandaReloj = setTimeout(paso, CONFIG.propagandaPorLaminaMs);
+  propagandaReloj = setTimeout(paso, dura(laminas[0]));
 }
 
 function cerrarPropaganda(){

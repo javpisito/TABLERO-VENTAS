@@ -135,6 +135,10 @@ canciones: son material publicitario, hecho para que lo vean. Una imagen que no
 cargue se descarta al precargar, no en mitad de la ronda — una lámina en blanco a
 pantalla completa se lee como que el tablero se rompió.
 
+Cada lámina puede llevar su propio tiempo (`{ ruta, ms }` en `CONFIG.propaganda`); la que
+no lo diga se queda `propagandaPorLaminaMs`. Las primeras piezas reales entraron el 10 de
+octubre de 2026: el reto de ventas (20 s) y el reto de Manuela (10 s).
+
 El intervalo quedó en 5 minutos por pedido del analista el 29 de agosto de 2026,
 con la advertencia dicha: en una jornada de 8 horas son casi cien veces tapando
 las cifras, y una pantalla de trabajo que interrumpe tanto se deja de mirar. Es
