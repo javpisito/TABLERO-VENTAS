@@ -6,7 +6,7 @@
 <title>Tablero de ventas · SC Ads</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Martian+Mono:wght@400;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Martian+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500;1,600;1,700&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
 <style>
 :root{
   /* Paleta SC Ads. El azul es el de la marca; el rojo solo para avisos. */
@@ -369,28 +369,102 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
    imagen se deforme, así que el margen solo restaba pantalla. */
 #propaganda .lamina{position:relative;overflow:hidden;flex:0 0 100%;height:100%;
   container-type:size}
-/* Se sale de la lámina por todos lados: el difuminado aclara los bordes, y sin
+/* ── Láminas de imagen ──
+   Se sale de la lámina por todos lados: el difuminado aclara los bordes, y sin
    ese margen se vería un marco borroso alrededor de la pantalla. */
-#propaganda .lamina::before{content:'';position:absolute;inset:-8%;
+#propaganda .lamina.imagen::before{content:'';position:absolute;inset:-8%;
   background:var(--fondo) center/cover no-repeat;filter:blur(48px) saturate(1.1)}
 /* contain y no cover: una pieza recortada por la mitad se ve como un error,
    no como diseño. Que sobre fondo antes que perder parte de la imagen.
-   .pieza es la caja exacta donde queda dibujada la imagen —lo más grande que
-   quepa con su proporción (--ar)—, para que la foto se ubique en porcentajes
-   de la pieza y caiga en el mismo lugar en cualquier pantalla. La lámina era
-   una rejilla centrada con max-height:100%, y ese 100% no tenía contra qué
-   medirse: en el 16:9 del televisor una pieza 4:3 salía más alta que la
-   pantalla y se recortaba arriba y abajo. */
-#propaganda .pieza{position:absolute;left:50%;top:50%;translate:-50% -50%;
-  width:min(100cqw, calc(100cqh * var(--ar, 1.7778)));aspect-ratio:var(--ar, 1.7778)}
-#propaganda .pieza > img{width:100%;height:100%;display:block}
-/* La foto de una persona, en círculo, encima de la pieza. Borde crema y un
-   aro fino del terracota de las piezas, para que parezca parte del diseño y
-   no una foto pegada. */
-#propaganda .pieza > .foto{position:absolute;left:var(--x);top:var(--y);width:var(--d);
-  height:auto;aspect-ratio:1;translate:-50% -50%;border-radius:50%;object-fit:cover;
-  border:.45cqh solid #F7ECE7;
-  box-shadow:0 0 0 .25cqh #B57263, 0 1.2cqh 3cqh rgba(92,52,42,.22)}
+   La lámina era una rejilla centrada con max-height:100%, y ese 100% no tenía
+   contra qué medirse: en el 16:9 del televisor una pieza 4:3 salía más alta
+   que la pantalla y se recortaba arriba y abajo. */
+#propaganda .lamina.imagen > img{position:relative;width:100%;height:100%;object-fit:contain;display:block}
+
+/* ── Láminas en HTML ──
+   Las piezas que importan se arman acá en vez de pegarse como imagen: el texto
+   es letra de verdad y sale nítido en cualquier resolución, y la composición
+   es 16:9 como el televisor, así que llena la pantalla sin recortar ni estirar.
+   .escena es lo más grande que quepa en 16:9 y es contenedor: todo adentro se
+   mide en cqh/cqw de la escena, y el diseño guarda su proporción en cualquier
+   pantalla. El fondo de la lámina cubre lo que la escena no alcance. */
+#propaganda .escena{position:absolute;left:50%;top:50%;translate:-50% -50%;
+  width:min(100cqw, calc(100cqh * 16 / 9));aspect-ratio:16/9;container-type:size}
+#propaganda .escena .marco{position:absolute;pointer-events:none}
+#propaganda .rotulito{font-family:'Archivo',system-ui,sans-serif;font-weight:600;
+  font-size:2.1cqh;letter-spacing:.42em;text-transform:uppercase}
+#propaganda .playfair, #propaganda .reto-manuela b{font-family:'Playfair Display',Georgia,serif;
+  font-variant-numeric:lining-nums}
+#propaganda .cormorant{font-family:'Cormorant Garamond','Playfair Display',Georgia,serif;font-style:italic}
+
+/* Reto de ventas. La pieza original tiene una foto desvanecida de fondo, pero
+   con el texto quemado encima: difuminada dejaba manchas oscuras detrás de las
+   letras. Queda un crema con luz cálida; si diseño manda la foto limpia, va
+   como background-image de esta lámina. */
+#propaganda .reto-ventas{background:
+  radial-gradient(ellipse 70% 80% at 72% 28%, #F6EFEA 0%, transparent 70%),
+  radial-gradient(ellipse 60% 70% at 18% 85%, #E4D5CB 0%, transparent 70%),
+  #EDE3DC}
+#propaganda .reto-ventas .marco{inset:3.4cqh;border:1px solid rgba(160,120,105,.45)}
+#propaganda .reto-ventas .lado{position:absolute;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center}
+#propaganda .reto-ventas .izq{left:9cqw;width:38cqw;color:#3A2A28}
+#propaganda .reto-ventas .der{left:52cqw;right:6cqw;align-items:center;text-align:center;color:#3A2A28}
+#propaganda .reto-ventas .divisor{position:absolute;left:49cqw;top:19cqh;bottom:19cqh;width:1px;background:rgba(160,120,105,.5)}
+#propaganda .reto-ventas .izq .rotulito{color:#7F625A;margin-bottom:2.5cqh}
+#propaganda .reto-ventas h3{font-weight:800;font-size:15cqh;line-height:.92;letter-spacing:-.01em;margin:0}
+#propaganda .reto-ventas h3 em{display:block;font-weight:700;color:#A06D5D}
+#propaganda .reto-ventas .raya{width:9cqh;height:.3cqh;background:#A06D5D;margin-top:4.5cqh}
+#propaganda .reto-ventas .quien{font-weight:500;font-size:3.9cqh}
+#propaganda .reto-ventas .que{font-weight:700;font-style:italic;font-size:7cqh;line-height:1.02;margin:.6cqh 0 2.4cqh}
+#propaganda .reto-ventas .der .rotulito{color:#6E5550}
+#propaganda .reto-ventas .premio{margin-top:3cqh;background:#A06F5F;color:#FBF3EF;border-radius:999px;
+  padding:3.4cqh 8cqh 3.8cqh;box-shadow:0 2.2cqh 4.5cqh rgba(120,70,55,.28)}
+#propaganda .reto-ventas .premio .rotulito{color:#F3E2DA;font-size:1.8cqh;display:block;margin-bottom:.8cqh}
+#propaganda .reto-ventas .premio b{font-weight:600;font-style:italic;font-size:7.4cqh;line-height:1}
+#propaganda .reto-ventas .pie{position:absolute;left:0;right:0;bottom:6cqh;text-align:center;
+  font-style:italic;font-size:2.7cqh;color:#4A3633}
+
+/* Reto de Manuela. La foto llena el arco y el nombre va encima, en crema,
+   sobre un degradado café que sube desde abajo: sin él se pierde contra la
+   chaqueta. Si la foto no carga (GitHub Pages, donde no está), el arco queda
+   rosado con el texto en terracota, como la pieza original. */
+#propaganda .reto-manuela{background:#F3E3DC}
+#propaganda .reto-manuela .marco.uno{inset:2.6cqh;border:1px solid #DDB9AD;border-radius:3.4cqh}
+#propaganda .reto-manuela .marco.dos{inset:4.2cqh;border:1px solid #E6C9BE;border-radius:2.6cqh}
+#propaganda .reto-manuela .arco{position:absolute;left:11cqw;top:9cqh;height:82cqh;aspect-ratio:.652;
+  overflow:hidden;background:#EAD3CB;border-radius:50% 50% 2.4cqh 2.4cqh / 32.6% 32.6% 2.4cqh 2.4cqh}
+#propaganda .reto-manuela .arco img{width:100%;height:100%;object-fit:cover;object-position:85% 0;display:block}
+#propaganda .reto-manuela .arco::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom, transparent 38%, rgba(74,40,32,.5) 62%, rgba(66,34,27,.9) 100%)}
+#propaganda .reto-manuela .rotulo{position:absolute;left:0;right:0;bottom:7cqh;z-index:1;text-align:center;
+  color:#FBF3EF;text-shadow:0 .2cqh 1.2cqh rgba(40,20,15,.35)}
+#propaganda .reto-manuela .rotulo .rotulito{font-size:1.9cqh;opacity:.88;padding-left:.45em}
+#propaganda .reto-manuela .rotulo .nombre{font-weight:600;font-size:13cqh;line-height:1;margin:1.6cqh 0 .8cqh}
+#propaganda .reto-manuela .rotulo .abajo{font-weight:500;font-size:3.6cqh;line-height:1.25}
+#propaganda .reto-manuela .arco.sinFoto img, #propaganda .reto-manuela .arco.sinFoto::after{display:none}
+#propaganda .reto-manuela .arco.sinFoto .rotulo{bottom:auto;top:50%;translate:0 -50%;color:#4A2C30;text-shadow:none}
+#propaganda .reto-manuela .arco.sinFoto .rotulito, #propaganda .reto-manuela .arco.sinFoto .nombre{color:#B07161}
+#propaganda .reto-manuela .der{position:absolute;left:52cqw;right:9cqw;top:0;bottom:0;
+  display:flex;flex-direction:column;justify-content:center;color:#4A2C30}
+#propaganda .reto-manuela .meta{font-family:'Archivo',system-ui,sans-serif;font-size:3cqh;color:#5B4044}
+#propaganda .reto-manuela .monto{font-weight:700;font-size:10cqh;line-height:1.05;margin:.4cqh 0 6cqh}
+#propaganda .reto-manuela .tramo{display:flex;justify-content:space-between;align-items:baseline}
+#propaganda .reto-manuela .tramo .rotulito{color:#A86F60}
+#propaganda .reto-manuela .tramo b{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:3.2cqh}
+#propaganda .reto-manuela .riel{position:relative;height:1.8cqh;margin:2cqh 0 1.6cqh;border:1px solid #D8B0A3;
+  border-radius:999px;background:#FBF6F3}
+#propaganda .reto-manuela .riel i{position:absolute;left:0;top:0;bottom:0;width:var(--avance,0%);
+  border-radius:999px;background:#B07161}
+#propaganda .reto-manuela .riel s{position:absolute;top:50%;left:var(--avance,0%);width:3.2cqh;height:3.2cqh;
+  translate:-50% -50%;border-radius:50%;background:#B07161;box-shadow:0 0 0 .9cqh rgba(176,113,97,.18)}
+#propaganda .reto-manuela .marcas{display:flex;justify-content:space-between;
+  font-family:'Archivo',system-ui,sans-serif;font-weight:500;font-size:2cqh;color:#B39A93}
+#propaganda .reto-manuela .marcas span:first-child, #propaganda .reto-manuela .marcas span:last-child{color:#4A2C30;font-weight:600}
+#propaganda .reto-manuela .bono{align-self:flex-start;margin-top:7cqh;background:#B07161;color:#FBF3EF;
+  border-radius:999px;padding:3cqh 9cqh 3.4cqh;text-align:center;box-shadow:0 2.2cqh 4.5cqh rgba(150,90,75,.25)}
+#propaganda .reto-manuela .bono .rotulito{display:block;font-size:1.8cqh;color:#F6E6DF;margin-bottom:.6cqh}
+#propaganda .reto-manuela .bono b{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-style:italic;font-size:8cqh;line-height:1}
+#propaganda .reto-manuela .lema{font-size:3.6cqh;color:#5B4044;margin-top:6cqh}
 
 /* Vidrio en la celebración: el tablero se ve difuminado por detrás. Es donde el
    efecto tiene sentido, porque hay contenido que refractar — sobre el fondo liso
@@ -688,6 +762,52 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
      quedaran vivas, la venta gana. La campana es el corazón de esta pantalla. -->
 <div id="propaganda" aria-hidden="true"><div class="tira"></div></div>
 
+<!-- Láminas de propaganda armadas en HTML. Se nombran en CONFIG.propaganda con
+     { plantilla: 'id' }. El texto se cambia acá mismo cada mes. -->
+<template id="lamina-reto-ventas">
+  <div class="escena">
+    <div class="marco"></div>
+    <div class="lado izq">
+      <div class="rotulito">✦ &nbsp;Este mes&nbsp; ✦</div>
+      <h3 class="playfair">Reto de <em>ventas</em></h3>
+      <div class="raya"></div>
+    </div>
+    <div class="divisor"></div>
+    <div class="lado der playfair">
+      <div class="quien">La vendedora con más ventas en</div>
+      <div class="que">Rejuvenecimiento<br>Íntimo</div>
+      <div class="rotulito">Se gana</div>
+      <div class="premio"><span class="rotulito">Premio</span><b>Peeling Facial</b></div>
+    </div>
+    <div class="pie playfair">Tu esfuerzo tiene recompensa.</div>
+  </div>
+</template>
+
+<!-- data-vendedora y data-meta alimentan la barra con lo facturado de verdad:
+     se busca en vendedoras[] del JSON por el comienzo del nombre. -->
+<template id="lamina-reto-manuela">
+  <div class="escena" data-vendedora="Manuela" data-meta="40000000">
+    <div class="marco uno"></div><div class="marco dos"></div>
+    <div class="arco">
+      <img src="propaganda/fotos/manuela.jpg" alt="">
+      <div class="rotulo">
+        <div class="rotulito">Reto de octubre</div>
+        <div class="nombre cormorant">Manuela</div>
+        <div class="abajo cormorant">este mes brilla<br>tu nombre</div>
+      </div>
+    </div>
+    <div class="der">
+      <div class="meta">Tu meta: superar los</div>
+      <div class="monto playfair">$40 millones</div>
+      <div class="tramo"><span class="rotulito">Tu camino</span><b class="vaFacturado">$0 / $40.000.000</b></div>
+      <div class="riel"><i></i><s></s></div>
+      <div class="marcas"><span>$0</span><span>$10M</span><span>$20M</span><span>$30M</span><span>$40M</span></div>
+      <div class="bono"><span class="rotulito">Tu bono</span><b>$50.000</b></div>
+      <div class="lema cormorant">Segura, elegante e imparable</div>
+    </div>
+  </div>
+</template>
+
 <div id="fiesta" role="status">
   <div class="grito" id="fiestaGrito">Venta</div>
   <div class="quien" id="fiestaQuien">—</div>
@@ -725,14 +845,15 @@ const CONFIG = {
   // Cada lámina puede ser solo la ruta, o { ruta, ms } si necesita su propio
   // tiempo; la que no lo diga se queda propagandaPorLaminaMs.
   //
-  // `foto` pone la foto de una persona en un círculo encima de la pieza: x e y
-  // son el centro y d el diámetro, en porcentaje del ancho/alto de la pieza.
-  // Las fotos van en propaganda/fotos/, que NO entra al repo (es público): en
-  // GitHub Pages dan 404 y la lámina sale sin foto, igual que las canciones.
+  // { plantilla: 'id' } en vez de ruta arma la lámina desde un <template> del
+  // HTML: texto nítido a cualquier resolución y 16:9 de borde a borde. Es lo
+  // que conviene para las piezas que se quedan en pantalla todo el mes; una
+  // imagen 4:3 en el televisor deja franjas a los lados.
+  // Las fotos de personas van en propaganda/fotos/, que NO entra al repo (es
+  // público): en GitHub Pages dan 404 y la lámina sale sin la foto.
   propaganda: [
-    { ruta: 'propaganda/reto-de-ventas.webp', ms: 20000 },
-    { ruta: 'propaganda/reto-manuela.webp',   ms: 10000,
-      foto: { ruta: 'propaganda/fotos/manuela.jpg', x: 27.05, y: 22.8, d: 16.5 } }
+    { plantilla: 'lamina-reto-ventas',  ms: 20000 },
+    { plantilla: 'lamina-reto-manuela', ms: 10000 }
   ],
   // Cada cuánto arranca una ronda. Se dejó en 5 minutos por pedido del analista,
   // sabiendo que en una jornada de 8 horas son casi cien veces tapando las
@@ -1368,26 +1489,67 @@ let propagandaReloj = null;
  * descarta acá y no en mitad de la ronda: una lámina en blanco a pantalla
  * completa se lee como que el tablero se rompió.
  */
+const fotosQueFaltan = new Set();   // fotos de las plantillas que no cargaron
+
 function prepararPropaganda(){
   propagandaLaminas = [];
   (CONFIG.propaganda || []).forEach((p, i) => {
     const lamina = Object.assign({}, typeof p === 'string' ? { ruta: p } : p);
+    if (lamina.plantilla){
+      const t = document.getElementById(lamina.plantilla);
+      if (!t) return;   // un id mal escrito descarta la lámina, no la ronda
+      propagandaLaminas[i] = lamina;
+      // Las fotos de la plantilla se prueban ahora: la que no cargue se marca y
+      // la lámina sale sin ella, en vez de un hueco a media ronda.
+      t.content.querySelectorAll('img').forEach(im => {
+        const f = new Image();
+        f.addEventListener('error', () => fotosQueFaltan.add(im.getAttribute('src')));
+        f.src = im.getAttribute('src');
+      });
+      return;
+    }
     const img = new Image();
     // El índice conserva el orden de CONFIG aunque carguen desordenadas.
-    img.addEventListener('load', () => {
-      lamina.ar = img.naturalWidth / img.naturalHeight;
-      propagandaLaminas[i] = lamina;
-    });
+    img.addEventListener('load', () => { propagandaLaminas[i] = lamina; });
     img.src = lamina.ruta;
-    // La foto es opcional: si no carga, la lámina sale igual, sin el círculo.
-    if (lamina.foto){
-      const foto = lamina.foto;
-      lamina.foto = null;
-      const f = new Image();
-      f.addEventListener('load', () => { lamina.foto = foto; });
-      f.src = foto.ruta;
+  });
+  // El navegador baja una fuente recién cuando algo la usa: sin esto, la
+  // primera ronda saldría con la de respaldo y cambiaría a media lámina.
+  if (document.fonts){
+    ['italic 600 1em "Cormorant Garamond"', 'italic 500 1em "Cormorant Garamond"',
+     '800 1em "Playfair Display"', '700 1em "Playfair Display"',
+     'italic 700 1em "Playfair Display"', 'italic 600 1em "Playfair Display"']
+      .forEach(f => document.fonts.load(f));
+  }
+}
+
+/** Arma una lámina de plantilla con las cifras del momento. */
+function armarPlantilla(l){
+  const div = document.createElement('div');
+  div.className = 'lamina ' + l.plantilla.replace(/^lamina-/, '');
+  div.appendChild(document.getElementById(l.plantilla).content.cloneNode(true));
+  div.querySelectorAll('img').forEach(im => {
+    if (fotosQueFaltan.has(im.getAttribute('src'))){
+      im.closest('.arco')?.classList.add('sinFoto');
+      im.remove();
     }
   });
+  // La barra del reto mide lo facturado de la vendedora contra su meta, como
+  // el ranking: la meta se cumple con plata que ya se hizo efectiva.
+  const e = div.querySelector('[data-vendedora]');
+  if (e){
+    const meta = Number(e.dataset.meta) || 0;
+    const clave = x => String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ\s]/g, '');
+    const quien = clave(e.dataset.vendedora);
+    const v = ((estado.datos && estado.datos.vendedoras) || []).find(x => clave(x.vendedora).startsWith(quien));
+    const lleva = v ? Number(v.facturado) || 0 : 0;
+    const va = div.querySelector('.vaFacturado');
+    const plata = x => pesos.format(x).replace(/\s/g, '');   // "$40.000.000", como en la pieza
+    if (va) va.textContent = plata(lleva) + ' / ' + plata(meta);
+    const riel = div.querySelector('.riel');
+    if (riel && meta > 0) riel.style.setProperty('--avance', Math.min(100, lleva / meta * 100).toFixed(1) + '%');
+  }
+  return div.outerHTML;
 }
 
 function arrancarPropaganda(){
@@ -1408,12 +1570,9 @@ function intentarPropaganda(){
 
 function correrPropaganda(laminas){
   const caja = $('#propaganda'), tira = caja.querySelector('.tira');
-  tira.innerHTML = laminas.map(l => {
-    const f = l.foto;
-    const foto = f ? '<img class="foto" src="' + f.ruta + '" alt="" style="--x:' + f.x + '%;--y:' + f.y + '%;--d:' + f.d + '%">' : '';
-    return '<div class="lamina" style="--fondo:url(\'' + l.ruta + '\')">' +
-      '<div class="pieza" style="--ar:' + l.ar + '"><img src="' + l.ruta + '" alt="">' + foto + '</div></div>';
-  }).join('');
+  tira.innerHTML = laminas.map(l => l.plantilla ? armarPlantilla(l) :
+    '<div class="lamina imagen" style="--fondo:url(\'' + l.ruta + '\')"><img src="' + l.ruta + '" alt=""></div>'
+  ).join('');
   const dura = l => l.ms || CONFIG.propagandaPorLaminaMs;
 
   tira.style.transition = 'none';

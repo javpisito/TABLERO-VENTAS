@@ -139,12 +139,35 @@ Cada lámina puede llevar su propio tiempo (`{ ruta, ms }` en `CONFIG.propaganda
 no lo diga se queda `propagandaPorLaminaMs`. Las primeras piezas reales entraron el 10 de
 octubre de 2026: el reto de ventas (20 s) y el reto de Manuela (10 s).
 
-**Las fotos de personas no van al repositorio.** Una lámina puede llevar `foto` (centro y
-diámetro en porcentaje de la pieza) y el tablero la pinta en un círculo encima. Las fotos
-viven en `propaganda/fotos/`, que está en `.gitignore` como `audio/`: las piezas son
-publicidad hecha para verse, pero la cara de una vendedora publicada en internet es otra
-cosa y no la decide el código. En GitHub Pages la foto da 404 y la lámina sale sin el
-círculo; en el televisor hay que copiar la foto a mano. Si la persona acepta que sea
+**Las piezas del mes se arman en HTML, no se pegan como imagen.** Decidido el 10 de
+octubre de 2026: las dos primeras llegaron en 4:3 y comprimidas, y en el televisor 16:9
+quedaban con franjas a los lados o, recortadas, perdían el pie y el marco. Ahora son
+`<template>` en el HTML (`{ plantilla: 'id' }` en `CONFIG.propaganda`), compuestas en
+16:9 y medidas en unidades de contenedor: llenan la pantalla y el texto es letra de
+verdad, nítido en Full HD o en 4K. Las letras son las de las piezas (Playfair Display,
+Cormorant Garamond, Archivo). Los textos se cambian en la plantilla cada mes.
+
+Las clases de las plantillas van todas bajo `#propaganda .reto-...`, pero las reglas
+globales del tablero sí las alcanzan: un `.camino` heredó el `flex:1` del panel del
+informe y desarmó la columna. Antes de nombrar una clase nueva ahí, buscarla en el CSS.
+
+La barra del reto de Manuela es en vivo: `data-vendedora` y `data-meta` en la plantilla,
+y `armarPlantilla()` busca lo **facturado** de esa vendedora en `vendedoras[]`, por el
+comienzo del nombre. Facturado y no proyectado, igual que el ranking y la meta de cliente.
+
+El fondo del reto de ventas era una foto desvanecida con el texto quemado encima; no se
+pudo separar, y difuminada dejaba manchas detrás de las letras. Va un crema con luz
+cálida hasta que diseño mande la foto limpia.
+
+Las láminas de imagen (`ruta`) siguen funcionando, con las franjas llenas de la misma
+imagen difuminada.
+
+**Las fotos de personas no van al repositorio.** La foto llena el arco y el texto del
+arco va encima en crema, sobre un degradado café. Las fotos viven en `propaganda/fotos/`,
+que está en `.gitignore` como `audio/`: las piezas son publicidad hecha para verse, pero
+la cara de una vendedora publicada en internet es otra cosa y no la decide el código. En
+GitHub Pages la foto da 404 y el arco sale rosado con el texto en terracota, como la pieza
+original; en el televisor hay que copiar la foto a mano. Si la persona acepta que sea
 pública, basta con sacarla de esa carpeta.
 
 El intervalo quedó en 5 minutos por pedido del analista el 29 de agosto de 2026,
