@@ -137,7 +137,10 @@ pantalla completa se lee como que el tablero se rompió.
 
 Cada lámina puede llevar su propio tiempo (`{ ruta, ms }` en `CONFIG.propaganda`); la que
 no lo diga se queda `propagandaPorLaminaMs`. Las primeras piezas reales entraron el 10 de
-octubre de 2026: el reto de ventas (20 s) y el reto de Manuela (10 s).
+octubre de 2026: el reto de ventas (20 s) y el reto de Manuela (10 s). El 5 de noviembre
+de 2026 se sacaron de la rotación por pedido del analista: `CONFIG.propaganda` quedó
+vacía, y con la lista vacía la propaganda no arranca. Las plantillas siguen en el HTML
+para reutilizarlas con los textos del mes.
 
 **Las piezas del mes se arman en HTML, no se pegan como imagen.** Decidido el 10 de
 octubre de 2026: las dos primeras llegaron en 4:3 y comprimidas, y en el televisor 16:9

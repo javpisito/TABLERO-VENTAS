@@ -851,10 +851,12 @@ const CONFIG = {
   // imagen 4:3 en el televisor deja franjas a los lados.
   // Las fotos de personas van en propaganda/fotos/, que NO entra al repo (es
   // público): en GitHub Pages dan 404 y la lámina sale sin la foto.
-  propaganda: [
-    { plantilla: 'lamina-reto-ventas',  ms: 20000 },
-    { plantilla: 'lamina-reto-manuela', ms: 10000 }
-  ],
+  // Vacía desde el 5 de noviembre de 2026: se quitaron los retos de octubre.
+  // Con la lista vacía la propaganda no arranca. Las plantillas siguen abajo en
+  // el HTML para la próxima pieza; volver a poner una es agregar su línea:
+  //   { plantilla: 'lamina-reto-ventas',  ms: 20000 },
+  //   { plantilla: 'lamina-reto-manuela', ms: 10000 }
+  propaganda: [],
   // Cada cuánto arranca una ronda. Se dejó en 5 minutos por pedido del analista,
   // sabiendo que en una jornada de 8 horas son casi cien veces tapando las
   // cifras. Si el equipo empieza a ignorar la pantalla, este número es el
