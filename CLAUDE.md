@@ -557,11 +557,34 @@ son cinco indicadores y no doce, las cifras del eje van en millones (`$12 M`, no
 `$12.000.000`) y no hay tablas de detalle. Si algo no se alcanza a leer desde el fondo de
 la oficina, no va.
 
-**La gráfica se dibuja a mano en SVG**, sin librerías, en `pintarGrafico()`. Es una sola
-curva: el acumulado del mes por día de cita, sólida hasta hoy y punteada de ahí en
-adelante. Que las dos mitades sean la misma curva es justamente el modelo — lo facturado
-va por dentro de lo proyectado — y el punteado muestra a dónde llega el mes si todo lo
-agendado se cumple. La línea de la meta va de referencia.
+**La gráfica se dibuja a mano en SVG**, sin librerías, en `pintarGrafico()`. Desde el 20
+de noviembre de 2026 son dos curvas, a pedido del analista, para ver qué tan lejos va lo
+facturado de lo proyectado y entender por qué:
+
+- **Facturado** (azul sólido): lo de las citas con fecha hasta cada día, por `dia`.
+- **Proyectado** (azul claro `#93B4FF`): lo que ya estaba agendado cada día, por
+  `diaVisto`. Arranca por encima de cero el día 1, con lo agendado desde antes.
+- El espacio entre las dos hasta hoy va sombreado, y la distancia de hoy lleva su
+  cifra: "faltan por pasar $ X M".
+- De hoy en adelante facturado sigue punteado con las citas que vienen y termina el
+  último día en lo proyectado, porque ahí las dos cifras se encuentran; proyectado
+  sigue plano y tenue ("si no se agenda nada más").
+
+Las series las arma `seriesDelMes()`. Una venta cuenta en proyectado desde el día que
+llegue primero, su cita o el día en que apareció: una cita del 3 digitada el 20,
+contada solo desde el 20, dejaba lo facturado por encima de lo agendado, y lo facturado
+va siempre por dentro.
+
+Dos límites del dato, dichos para que no sorprendan: `visto_en` es cuándo la vio el
+recolector, no cuándo se agendó (un mes digitado tarde sube junto el día de la
+digitación, salvo lo que ya tenía cita), y una venta anulada sale de toda la curva
+hacia atrás, porque el Registro no guarda el día de la anulación. Si el JSON no trae
+`diaVisto`, la línea de proyectado no se dibuja y la leyenda dice "falta actualizar el
+recolector". La barra de reparto de la distancia que salió en el boceto quedó por fuera
+a pedido del analista. La línea de la meta va de referencia, con la regla de siempre.
+
+Las pruebas viven en `pruebas/`: `node pruebas/probar-recolector.js` para el
+recolector, y `pruebas/probar-grafica.js` se corre dentro de la página (ver su cabecera).
 
 El día lo manda el servidor (`dia` por venta, `dia` y `diasDelMes` arriba). El televisor
 no vuelve a parsear fechas: ahí fue donde se coló el corrimiento de zona.

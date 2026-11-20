@@ -144,7 +144,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
   font-family:'Martian Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--humo)}
 .leyenda span{display:flex;align-items:center;gap:.4rem}
 .leyenda i{width:.85rem;height:.28rem;border-radius:999px;background:var(--azul);display:block}
-.leyenda .porvenir i{background:#BFD3FF}
+.leyenda .porvenir i{background:transparent;border-top:3px dotted #93B4FF;height:0}
+.leyenda .proyectado i{background:#93B4FF}
+.leyenda .sinVisto{display:none;color:var(--tinta-2)}
 .leyenda .meta i{background:transparent;border-top:2px dashed var(--humo);height:0;width:1rem}
 
 /* Cuando las vendedoras no caben, la lista sube sola en un ciclo sin fin: el
@@ -494,8 +496,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .reja{stroke:#EDF1F8;stroke-width:1}
 .ejeY{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
 .ejeX{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:middle}
-.areaFirme{fill:rgba(37,99,235,.16)}
-.areaPorVenir{fill:rgba(37,99,235,.05)}
+.areaBrecha{fill:rgba(147,180,255,.18)}
+.lineaProyectado{fill:none;stroke:#93B4FF;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+.lineaProyectadoResto{stroke:#93B4FF;stroke-width:2;stroke-dasharray:3 7;opacity:.8}
+.brechaHoy{stroke:#33425C;stroke-width:2}
+.rotuloBrecha{fill:#33425C;font-family:'Martian Mono',monospace;font-size:15px}
 .lineaFirme{fill:none;stroke:#2563EB;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
 .lineaPorVenir{fill:none;stroke:#93B4FF;stroke-width:4;stroke-dasharray:9 8;
   stroke-linejoin:round;stroke-linecap:round}
@@ -620,9 +625,11 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div class="rotulo-col">Evolución del mes <em id="rotuloDia"></em></div>
       <div id="grafico"></div>
       <div class="leyenda">
-        <span><i></i>ya se hizo</span>
-        <span class="porvenir"><i></i>agendado por venir</span>
+        <span><i></i>facturado</span>
+        <span class="porvenir"><i></i>citas por venir</span>
+        <span class="proyectado"><i></i>proyectado</span>
         <span class="meta"><i></i>meta</span>
+        <span class="sinVisto">falta actualizar el recolector</span>
       </div>
     </section>
     <section class="panel">
@@ -698,9 +705,11 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div class="rotulo-col">Evolución del cliente</div>
       <div class="graficoInforme" id="iGrafico"></div>
       <div class="leyenda">
-        <span><i></i>ya se hizo</span>
-        <span class="porvenir"><i></i>agendado por venir</span>
+        <span><i></i>facturado</span>
+        <span class="porvenir"><i></i>citas por venir</span>
+        <span class="proyectado"><i></i>proyectado</span>
         <span class="meta" id="iLeyendaMeta"><i></i>meta</span>
+        <span class="sinVisto">falta actualizar el recolector</span>
       </div>
     </section>
     <section class="panel">
@@ -1887,12 +1896,45 @@ function pintarClientes(clientes){
 /* ================================================================
    GRÁFICA DEL MES
    ================================================================
-   SVG a mano, sin librerías. Una sola curva: el acumulado del mes por
-   día de cita. Sólida hasta hoy (lo que ya se hizo efectivo) y punteada
-   de ahí en adelante (lo que ya está agendado). Que las dos partes sean
-   la misma curva es justo el modelo: lo facturado va por dentro.
+   SVG a mano, sin librerías. Dos curvas sobre los días del mes:
+   facturado (lo que ya se hizo efectivo, por día de cita) y proyectado
+   (lo que ya estaba agendado cada día, por día en que apareció). El
+   espacio entre las dos hasta hoy es lo agendado que todavía no llega.
+   De hoy en adelante facturado sigue punteado con las citas que vienen
+   y termina en lo proyectado: lo facturado va siempre por dentro.
    ================================================================ */
 const G = { ancho:1000, alto:330, izq:96, der:18, arriba:18, abajo:34 };
+
+/**
+ * Las dos series de la gráfica, del día 0 al último del mes.
+ *
+ *   facturado[d]  = lo de las citas con fecha hasta d (por `dia`)
+ *   proyectado[d] = lo que ya estaba agendado el día d (por `diaVisto`)
+ *
+ * Una venta cuenta en proyectado desde el día que llegue primero: su cita o el día
+ * en que apareció. Una cita del 3 digitada el 20 contada solo desde el 20 dejaba lo
+ * facturado por encima de lo agendado entre el 3 y el 20, y lo facturado va siempre
+ * por dentro de lo proyectado.
+ *
+ * Si ninguna venta trae `diaVisto` (recolector publicado antes de este cambio), el
+ * proyectado no se inventa: queda en ceros y `conVisto` en false, para que la
+ * gráfica lo diga en vez de dibujar una agenda vacía.
+ */
+function seriesDelMes(ventas, dias){
+  const conVisto = !ventas.length || ventas.some(v => v.diaVisto != null);
+  const nuevoP = new Array(dias + 1).fill(0), nuevoF = new Array(dias + 1).fill(0);
+  ventas.forEach(v => {
+    const monto = Number(v.monto) || 0;
+    const dia = Number(v.dia) || 0;
+    if (dia >= 1 && dia <= dias) nuevoF[dia] += monto;
+    if (conVisto){
+      const desde = Math.max(0, Math.min(Number(v.diaVisto) || 0, dia || dias));
+      nuevoP[desde] += monto;
+    }
+  });
+  for (let i = 1; i <= dias; i++){ nuevoF[i] += nuevoF[i - 1]; nuevoP[i] += nuevoP[i - 1]; }
+  return { proyectado: nuevoP, facturado: nuevoF, conVisto };
+}
 
 /**
  * La gráfica del mes. Sin opciones dibuja la del tablero; el informe de cliente
@@ -1906,14 +1948,7 @@ function pintarGrafico(d, opc){
   const dias = Number(d.diasDelMes) || 30;
   const diaHoy = Math.min(Math.max(Number(d.dia) || 1, 1), dias);
 
-  // acumulado por día de cita
-  const porDia = new Array(dias + 2).fill(0);
-  (opc.ventas || d.ventas || []).forEach(v => {
-    const i = Number(v.dia) || 0;
-    if (i >= 1 && i <= dias) porDia[i] += Number(v.monto) || 0;
-  });
-  const acum = [0];
-  for (let i = 1; i <= dias; i++) acum[i] = acum[i - 1] + porDia[i];
+  const { proyectado, facturado, conVisto } = seriesDelMes(opc.ventas || d.ventas || [], dias);
 
   const meta = opc.meta != null ? Number(opc.meta) || 0
     : (d.clientes || []).reduce((s, c) => s + (Number(c.metaMes) || 0), 0);
@@ -1922,10 +1957,10 @@ function pintarGrafico(d, opc){
   // lo vendido, y meterla en el techo deja la curva aplastada contra el piso sin poder
   // leer nada. La meta se dibuja cuando ya está a la vista; mientras tanto vive en su
   // propio indicador, que siempre muestra el porcentaje.
-  const total = acum[dias];
+  const total = facturado[dias];
   const metaVisible = meta > 0 && meta <= total * 1.6 ? meta : 0;
   // El techo sube al siguiente número redondo: el eje dice "$40 M" y no "$38,4 M".
-  const paso = pasoRedondo(Math.max(total, metaVisible, 1) * 1.1 / 4);
+  const paso = pasoRedondo(Math.max(proyectado[dias], total, metaVisible, 1) * 1.1 / 4);
   const techo = paso * 4;
 
   const x = i => G.izq + (i / dias) * (G.ancho - G.izq - G.der);
@@ -1946,19 +1981,38 @@ function pintarGrafico(d, opc){
     partes.push(`<text x="${x(i)}" y="${base + 22}" class="ejeX">${i}</text>`);
   }
 
-  // ── la curva ──
-  const punto = i => `${x(i)},${y(acum[i])}`;
-  const hasta = n => Array.from({length: n + 1}, (_, i) => punto(i)).join(' ');
-  const desde = (a, b) => Array.from({length: b - a + 1}, (_, k) => punto(a + k)).join(' ');
+  // ── las dos curvas ──
+  // Facturado (azul) es lo que ya se hizo efectivo; proyectado (azul claro) es lo
+  // que ya estaba agendado. El espacio entre las dos es lo agendado que todavía no
+  // llega. Desde el 20 de noviembre de 2026: antes era una sola curva.
+  const tramo = (serie, a, b) =>
+    Array.from({length: b - a + 1}, (_, k) => `${x(a + k)},${y(serie[a + k])}`).join(' ');
 
-  // lo que ya pasó: área sólida
-  partes.push(`<polygon class="areaFirme" points="${G.izq},${base} ${hasta(diaHoy)} ${x(diaHoy)},${base}"/>`);
-  // lo que falta del mes: área tenue
-  if (diaHoy < dias){
-    partes.push(`<polygon class="areaPorVenir" points="${x(diaHoy)},${base} ${desde(diaHoy, dias)} ${x(dias)},${base}"/>`);
-    partes.push(`<polyline class="lineaPorVenir" points="${desde(diaHoy, dias)}"/>`);
+  if (conVisto){
+    // el espacio entre las dos, hasta hoy: arriba proyectado, abajo facturado de vuelta
+    const vuelta = Array.from({length: diaHoy + 1}, (_, k) => `${x(diaHoy - k)},${y(facturado[diaHoy - k])}`).join(' ');
+    partes.push(`<polygon class="areaBrecha" points="${tramo(proyectado, 0, diaHoy)} ${vuelta}"/>`);
   }
-  partes.push(`<polyline class="lineaFirme" points="${hasta(diaHoy)}"/>`);
+  if (diaHoy < dias){
+    // Facturado sigue punteado con las citas ya agendadas que vienen: termina el
+    // último día en lo proyectado, porque ahí las dos cifras se encuentran.
+    partes.push(`<polyline class="lineaPorVenir" points="${tramo(facturado, diaHoy, dias)}"/>`);
+    // Proyectado sigue plano y tenue: así quedaría el mes si no se agenda nada más.
+    if (conVisto) partes.push(`<line x1="${x(diaHoy)}" y1="${y(proyectado[diaHoy])}" x2="${x(dias)}" y2="${y(proyectado[diaHoy])}" class="lineaProyectadoResto"/>`);
+  }
+  if (conVisto) partes.push(`<polyline class="lineaProyectado" points="${tramo(proyectado, 0, diaHoy)}"/>`);
+  partes.push(`<polyline class="lineaFirme" points="${tramo(facturado, 0, diaHoy)}"/>`);
+
+  // ── la distancia de hoy, con su cifra ──
+  const brecha = conVisto ? proyectado[diaHoy] - facturado[diaHoy] : 0;
+  if (brecha > 0){
+    const yArriba = y(proyectado[diaHoy]), yAbajo = y(facturado[diaHoy]);
+    partes.push(`<line x1="${x(diaHoy)}" y1="${yArriba}" x2="${x(diaHoy)}" y2="${yAbajo}" class="brechaHoy"/>`);
+    // A la derecha de la raya; a la izquierda cuando ya no cabe por estar cerca del final.
+    const izquierda = diaHoy > dias * 0.7;
+    partes.push(`<text x="${x(diaHoy) + (izquierda ? -12 : 12)}" y="${(yArriba + yAbajo) / 2 + 5}"
+      class="rotuloBrecha" text-anchor="${izquierda ? 'end' : 'start'}">faltan por pasar ${enMillones(brecha)}</text>`);
+  }
 
   // ── la meta, cuando cabe ──
   if (metaVisible){
@@ -1968,13 +2022,21 @@ function pintarGrafico(d, opc){
   // la leyenda no anuncia una línea que no está dibujada
   const leyendaMeta = opc.leyenda !== undefined ? opc.leyenda : document.querySelector('.leyenda .meta');
   if (leyendaMeta) leyendaMeta.style.display = metaVisible ? '' : 'none';
+  // Sin diaVisto el proyectado no se dibuja, y la leyenda dice por qué: un recolector
+  // publicado antes de este cambio. Una línea en cero se leería como agenda vacía.
+  const leyenda = caja.parentElement && caja.parentElement.querySelector('.leyenda');
+  if (leyenda){
+    const p = leyenda.querySelector('.proyectado'), sin = leyenda.querySelector('.sinVisto');
+    if (p) p.style.display = conVisto ? '' : 'none';
+    if (sin) sin.style.display = conVisto ? 'none' : 'flex';
+  }
 
   // ── el día de hoy ──
   partes.push(`<line x1="${x(diaHoy)}" y1="${G.arriba}" x2="${x(diaHoy)}" y2="${base}" class="lineaHoy"/>`);
-  partes.push(`<circle cx="${x(diaHoy)}" cy="${y(acum[diaHoy])}" r="6" class="puntoHoy"/>`);
+  partes.push(`<circle cx="${x(diaHoy)}" cy="${y(facturado[diaHoy])}" r="6" class="puntoHoy"/>`);
 
   caja.innerHTML = `<svg viewBox="0 0 ${G.ancho} ${G.alto}" preserveAspectRatio="xMidYMid meet"
-    role="img" aria-label="Acumulado del mes por día">${partes.join('')}</svg>`;
+    role="img" aria-label="Proyectado contra facturado del mes, por día">${partes.join('')}</svg>`;
 }
 
 /**
@@ -2181,7 +2243,11 @@ function ventaDemo(nueva){
     estado:'Agendada',
     producto:DEMO.productos[Math.floor(Math.random()*DEMO.productos.length)],
     ts:fecha.toISOString(),
-    dia:fecha.getDate()
+    dia:fecha.getDate(),
+    // Cuándo "apareció": la nueva hoy; las de arranque, cualquier día hasta hoy o
+    // antes del mes (0), sin pasar de su cita. Así la línea de proyectado tiene forma.
+    diaVisto: nueva ? hoy.getDate()
+      : Math.floor(Math.random() * (Math.min(fecha.getDate(), hoy.getDate()) + 1))
   };
 }
 
