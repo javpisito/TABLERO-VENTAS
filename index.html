@@ -2010,8 +2010,10 @@ function pintarGrafico(d, opc){
   if (brecha > 0){
     const yArriba = y(proyectado[diaHoy]), yAbajo = y(facturado[diaHoy]);
     partes.push(`<line x1="${x(diaHoy)}" y1="${yArriba}" x2="${x(diaHoy)}" y2="${yAbajo}" class="brechaHoy"/>`);
-    // A la derecha de la raya; a la izquierda cuando ya no cabe por estar cerca del final.
-    const izquierda = diaHoy > dias * 0.7;
+    // A la izquierda de la raya, dentro del espacio sombreado: a la derecha la cruza
+    // la punteada de facturado cuando hay citas justo después de hoy. Solo a
+    // principio de mes, donde a la izquierda no cabe, va a la derecha.
+    const izquierda = diaHoy >= dias * 0.3;
     partes.push(`<text x="${x(diaHoy) + (izquierda ? -12 : 12)}" y="${(yArriba + yAbajo) / 2 + 5}"
       class="rotuloBrecha" text-anchor="${izquierda ? 'end' : 'start'}">faltan por pasar ${enMillones(brecha)}</text>`);
   }

@@ -42,5 +42,13 @@
     debe(color(porVenir) !== color(proy), 'facturado por venir no va del color de proyectado');
   }
 
+  // El rótulo de la distancia va a la izquierda de hoy, dentro del espacio
+  // sombreado: a la derecha lo cruza la punteada de facturado cuando hay citas
+  // justo después de hoy. Solo a principio de mes, donde no cabe, va a la derecha.
+  const rotulo = document.querySelector('#grafico .rotuloBrecha');
+  if (rotulo && estado.datos && estado.datos.dia >= estado.datos.diasDelMes * 0.3){
+    debe(rotulo.getAttribute('text-anchor') === 'end', 'el rótulo de la distancia va a la izquierda de hoy');
+  }
+
   return fallas;
 })()
