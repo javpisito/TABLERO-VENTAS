@@ -30,5 +30,17 @@
   const n = seriesDelMes([], 30);
   debe(n.conVisto === true && n.proyectado[30] === 0 && n.facturado[30] === 0, 'mes sin ventas en cero');
 
+  // Lo facturado por venir es facturado: va del color de facturado, no del de
+  // proyectado. Si no, de hoy en adelante quedan dos rayas iguales y a tres metros
+  // no se sabe cuál es cuál.
+  const porVenir = document.querySelector('#grafico .lineaPorVenir');
+  const firme = document.querySelector('#grafico .lineaFirme');
+  const proy = document.querySelector('#grafico .lineaProyectado');
+  if (porVenir && firme && proy){
+    const color = el => getComputedStyle(el).stroke;
+    debe(color(porVenir) === color(firme), 'facturado por venir va del color de facturado');
+    debe(color(porVenir) !== color(proy), 'facturado por venir no va del color de proyectado');
+  }
+
   return fallas;
 })()
