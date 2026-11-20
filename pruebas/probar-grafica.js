@@ -30,27 +30,35 @@
   const n = seriesDelMes([], 30);
   debe(n.conVisto === true && n.proyectado[30] === 0 && n.facturado[30] === 0, 'mes sin ventas en cero');
 
-  // Lo facturado por venir es facturado: va del color de facturado, no del de
-  // proyectado. Si no, de hoy en adelante quedan dos rayas iguales y a tres metros
-  // no se sabe cuál es cuál.
-  const porVenir = document.querySelector('#grafico .lineaPorVenir');
+  // Pedido del analista el 20 de noviembre de 2026: facturado verde y termina en
+  // la línea de hoy; proyectado azul, y es el único que sigue, punteado y plano,
+  // con lo que ya está agendado para el resto del mes.
   const firme = document.querySelector('#grafico .lineaFirme');
   const proy = document.querySelector('#grafico .lineaProyectado');
-  if (porVenir && firme && proy){
-    const color = el => getComputedStyle(el).stroke;
-    debe(color(porVenir) === color(firme), 'facturado por venir va del color de facturado');
-    debe(color(porVenir) !== color(proy), 'facturado por venir no va del color de proyectado');
-    // Pedido del analista el 20 de noviembre de 2026: facturado verde, proyectado azul.
+  const resto = document.querySelector('#grafico .lineaProyectadoResto');
+  const color = el => getComputedStyle(el).stroke;
+  debe(!document.querySelector('#grafico .lineaPorVenir'), 'facturado termina en la línea de hoy');
+  if (firme && proy){
     debe(color(firme) === 'rgb(22, 163, 74)', 'facturado va en verde #16A34A');
     debe(color(proy) === 'rgb(37, 99, 235)', 'proyectado va en azul #2563EB');
   }
+  if (resto && proy){
+    debe(color(resto) === color(proy), 'la punteada de hoy en adelante es la de proyectado');
+    debe(getComputedStyle(resto).strokeDasharray !== 'none', 'la de hoy en adelante va punteada');
+    debe(parseFloat(getComputedStyle(resto).strokeWidth) >= 3, 'la punteada se alcanza a ver a tres metros');
+    debe(getComputedStyle(resto).opacity === '1', 'la punteada no va tenue');
+  }
 
-  // El rótulo de la distancia va a la izquierda de hoy, dentro del espacio
-  // sombreado: a la derecha lo cruza la punteada de facturado cuando hay citas
-  // justo después de hoy. Solo a principio de mes, donde no cabe, va a la derecha.
+  // El rótulo de la distancia va a la derecha de hoy, debajo de la punteada azul:
+  // como facturado termina en hoy, ese lado está libre. A la izquierda, con una
+  // distancia chica, quedaba montado sobre la línea de proyectado. Solo al final
+  // del mes, donde a la derecha no cabe, va a la izquierda.
   const rotulo = document.querySelector('#grafico .rotuloBrecha');
-  if (rotulo && estado.datos && estado.datos.dia >= estado.datos.diasDelMes * 0.3){
-    debe(rotulo.getAttribute('text-anchor') === 'end', 'el rótulo de la distancia va a la izquierda de hoy');
+  if (rotulo && estado.datos && estado.datos.dia <= estado.datos.diasDelMes * 0.8){
+    debe(rotulo.getAttribute('text-anchor') === 'start', 'el rótulo de la distancia va a la derecha de hoy');
+    const yTexto = parseFloat(rotulo.getAttribute('y'));
+    const yPunteada = parseFloat(document.querySelector('#grafico .lineaProyectadoResto').getAttribute('y1'));
+    debe(yTexto > yPunteada + 15, 'el rótulo va debajo de la punteada, sin tocarla');
   }
 
   return fallas;

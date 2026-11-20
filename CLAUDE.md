@@ -570,9 +570,12 @@ facturado de lo proyectado y entender por qué:
   `diaVisto`. Arranca por encima de cero el día 1, con lo agendado desde antes.
 - El espacio entre las dos hasta hoy va sombreado, y la distancia de hoy lleva su
   cifra: "faltan por pasar $ X M".
-- De hoy en adelante facturado sigue punteado con las citas que vienen y termina el
-  último día en lo proyectado, porque ahí las dos cifras se encuentran; proyectado
-  sigue plano y tenue ("si no se agenda nada más").
+- Facturado termina en la línea de hoy: de ahí en adelante no ha pasado nada.
+  Proyectado es el único que sigue, punteado y plano hasta el último día, con lo
+  que ya está agendado para el mes. Decidido con el analista el mismo día: se
+  probó con facturado punteado hacia adelante y se prefirió así. La cifra de la
+  distancia va a la derecha de hoy, debajo de la punteada; al final del mes, a la
+  izquierda.
 
 Las series las arma `seriesDelMes()`. Una venta cuenta en proyectado desde el día que
 llegue primero, su cita o el día en que apareció: una cita del 3 digitada el 20,

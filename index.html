@@ -145,7 +145,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .leyenda span{display:flex;align-items:center;gap:.4rem}
 .leyenda i{width:.85rem;height:.28rem;border-radius:999px;background:var(--azul);display:block}
 .leyenda .facturado i{background:#16A34A}
-.leyenda .porvenir i{background:transparent;border-top:3px dotted #16A34A;height:0}
 .leyenda .proyectado i{background:#2563EB}
 .leyenda .sinVisto{display:none;color:var(--tinta-2)}
 .leyenda .meta i{background:transparent;border-top:2px dashed var(--humo);height:0;width:1rem}
@@ -501,14 +500,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
    de 2026, para que las dos líneas no se confundan a tres metros. */
 .areaBrecha{fill:rgba(37,99,235,.08)}
 .lineaProyectado{fill:none;stroke:#2563EB;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
-.lineaProyectadoResto{stroke:#2563EB;stroke-width:2;stroke-dasharray:3 7;opacity:.8}
+.lineaProyectadoResto{stroke:#2563EB;stroke-width:4;stroke-dasharray:9 8;stroke-linecap:round}
 .brechaHoy{stroke:#33425C;stroke-width:2}
 .rotuloBrecha{fill:#33425C;font-family:'Martian Mono',monospace;font-size:15px}
 .lineaFirme{fill:none;stroke:#16A34A;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
-/* Lo facturado por venir es facturado: va en su azul, punteado. En azul claro se
-   confundía con la raya de proyectado que corre al lado de hoy en adelante. */
-.lineaPorVenir{fill:none;stroke:#16A34A;stroke-width:4;stroke-dasharray:9 8;
-  stroke-linejoin:round;stroke-linecap:round}
 .lineaMeta{stroke:#7A8AA3;stroke-width:2;stroke-dasharray:7 6}
 .rotuloMeta{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
 .lineaHoy{stroke:#C7D9FF;stroke-width:2}
@@ -631,7 +626,6 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div id="grafico"></div>
       <div class="leyenda">
         <span class="facturado"><i></i>facturado</span>
-        <span class="porvenir"><i></i>citas por venir</span>
         <span class="proyectado"><i></i>proyectado</span>
         <span class="meta"><i></i>meta</span>
         <span class="sinVisto">falta actualizar el recolector</span>
@@ -711,7 +705,6 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div class="graficoInforme" id="iGrafico"></div>
       <div class="leyenda">
         <span class="facturado"><i></i>facturado</span>
-        <span class="porvenir"><i></i>citas por venir</span>
         <span class="proyectado"><i></i>proyectado</span>
         <span class="meta" id="iLeyendaMeta"><i></i>meta</span>
         <span class="sinVisto">falta actualizar el recolector</span>
@@ -1905,8 +1898,8 @@ function pintarClientes(clientes){
    facturado (lo que ya se hizo efectivo, por día de cita) y proyectado
    (lo que ya estaba agendado cada día, por día en que apareció). El
    espacio entre las dos hasta hoy es lo agendado que todavía no llega.
-   De hoy en adelante facturado sigue punteado con las citas que vienen
-   y termina en lo proyectado: lo facturado va siempre por dentro.
+   Facturado termina en hoy; proyectado sigue punteado y plano hasta el
+   último día con lo que ya está agendado.
    ================================================================ */
 const G = { ancho:1000, alto:330, izq:96, der:18, arriba:18, abajo:34 };
 
@@ -1998,11 +1991,10 @@ function pintarGrafico(d, opc){
     const vuelta = Array.from({length: diaHoy + 1}, (_, k) => `${x(diaHoy - k)},${y(facturado[diaHoy - k])}`).join(' ');
     partes.push(`<polygon class="areaBrecha" points="${tramo(proyectado, 0, diaHoy)} ${vuelta}"/>`);
   }
+  // Facturado termina en la línea de hoy: de ahí en adelante no ha pasado nada.
+  // Proyectado es el único que sigue, punteado y plano, con lo que ya está
+  // agendado para el resto del mes. Pedido del analista el 20 de noviembre de 2026.
   if (diaHoy < dias){
-    // Facturado sigue punteado con las citas ya agendadas que vienen: termina el
-    // último día en lo proyectado, porque ahí las dos cifras se encuentran.
-    partes.push(`<polyline class="lineaPorVenir" points="${tramo(facturado, diaHoy, dias)}"/>`);
-    // Proyectado sigue plano y tenue: así quedaría el mes si no se agenda nada más.
     if (conVisto) partes.push(`<line x1="${x(diaHoy)}" y1="${y(proyectado[diaHoy])}" x2="${x(dias)}" y2="${y(proyectado[diaHoy])}" class="lineaProyectadoResto"/>`);
   }
   if (conVisto) partes.push(`<polyline class="lineaProyectado" points="${tramo(proyectado, 0, diaHoy)}"/>`);
@@ -2013,12 +2005,13 @@ function pintarGrafico(d, opc){
   if (brecha > 0){
     const yArriba = y(proyectado[diaHoy]), yAbajo = y(facturado[diaHoy]);
     partes.push(`<line x1="${x(diaHoy)}" y1="${yArriba}" x2="${x(diaHoy)}" y2="${yAbajo}" class="brechaHoy"/>`);
-    // A la izquierda de la raya, dentro del espacio sombreado: a la derecha la cruza
-    // la punteada de facturado cuando hay citas justo después de hoy. Solo a
-    // principio de mes, donde a la izquierda no cabe, va a la derecha.
-    const izquierda = diaHoy >= dias * 0.3;
-    partes.push(`<text x="${x(diaHoy) + (izquierda ? -12 : 12)}" y="${(yArriba + yAbajo) / 2 + 5}"
-      class="rotuloBrecha" text-anchor="${izquierda ? 'end' : 'start'}">faltan por pasar ${enMillones(brecha)}</text>`);
+    // A la derecha de la raya, debajo de la punteada azul: como facturado termina en
+    // hoy, ese lado está libre. A la izquierda, con una distancia chica, quedaba
+    // montado sobre la línea de proyectado. Solo al final del mes, donde a la
+    // derecha no cabe, va a la izquierda, a media altura entre las dos curvas.
+    const derecha = diaHoy <= dias * 0.8;
+    partes.push(`<text x="${x(diaHoy) + (derecha ? 12 : -12)}" y="${derecha ? yArriba + 26 : (yArriba + yAbajo) / 2 + 5}"
+      class="rotuloBrecha" text-anchor="${derecha ? 'start' : 'end'}">faltan por pasar ${enMillones(brecha)}</text>`);
   }
 
   // ── la meta, cuando cabe ──

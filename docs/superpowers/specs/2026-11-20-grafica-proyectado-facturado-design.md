@@ -20,12 +20,11 @@ Dos líneas sobre los días del mes:
 - **La distancia entre las dos en el día de hoy**, marcada y con su cifra
   ("faltan por pasar $ X M"). Es lo agendado que todavía no llega.
 
-Las dos se dibujan sólidas hasta hoy. De hoy en adelante:
+Las dos se dibujan sólidas hasta hoy. De hoy en adelante (ajustado con el analista
+al ver la primera versión, que seguía facturado punteado hacia adelante):
 
-- facturado sigue punteada con las citas ya agendadas por venir (la parte punteada
-  de hoy), así que termina el último día justo en el proyectado: las dos cifras se
-  encuentran el último día del mes, como dice el modelo;
-- proyectado sigue como una raya tenue horizontal ("si no se agenda nada más").
+- facturado termina en la línea de hoy;
+- proyectado sigue punteado y plano hasta el último día, con lo ya agendado.
 
 La línea de la meta se queda como referencia, con la regla que ya tiene.
 
