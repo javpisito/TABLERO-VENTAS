@@ -64,8 +64,9 @@ La línea de la meta se queda como referencia, con la regla que ya tiene.
 ## Colores
 
 La paleta del proyecto no permite rojo fuera de los avisos, así que el dibujo
-(verde y rojo) se traduce así: **facturado en azul sólido** (`--azul`), como hoy;
-**proyectado en azul claro** (`#93B4FF`); el espacio entre las dos, sombreado tenue.
+(verde y rojo) se tradujo primero a dos azules. Al verlo, el analista pidió
+**facturado en verde** (`#16A34A`) y **proyectado en azul** (`#2563EB`); el espacio
+entre las dos, sombreado tenue.
 
 ## Límites que quedan dichos
 

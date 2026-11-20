@@ -40,6 +40,9 @@
     const color = el => getComputedStyle(el).stroke;
     debe(color(porVenir) === color(firme), 'facturado por venir va del color de facturado');
     debe(color(porVenir) !== color(proy), 'facturado por venir no va del color de proyectado');
+    // Pedido del analista el 20 de noviembre de 2026: facturado verde, proyectado azul.
+    debe(color(firme) === 'rgb(22, 163, 74)', 'facturado va en verde #16A34A');
+    debe(color(proy) === 'rgb(37, 99, 235)', 'proyectado va en azul #2563EB');
   }
 
   // El rótulo de la distancia va a la izquierda de hoy, dentro del espacio

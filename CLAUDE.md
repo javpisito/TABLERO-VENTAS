@@ -539,6 +539,10 @@ resultados de SC Ads: fondo claro, tarjetas blancas y el azul de la marca.
 | `--linea` | `#E3E9F3` | Bordes |
 | `--senal` | `#DC2626` | Solo avisos. En ninguna otra parte |
 
+Una excepción pedida por el analista el 20 de noviembre de 2026: en la gráfica del mes
+la línea de facturado va en verde `#16A34A` y la de proyectado en el azul de la marca,
+para que las dos no se confundan a tres metros. El verde no se usa en ninguna otra parte.
+
 Lo que va en azul sólido con texto blanco es lo que importa: la tarjeta de Facturado, la
 fila de la vendedora líder y la pantalla de celebración. Es el tratamiento de "resultado
 que importa" del reporte.
@@ -561,8 +565,8 @@ la oficina, no va.
 de noviembre de 2026 son dos curvas, a pedido del analista, para ver qué tan lejos va lo
 facturado de lo proyectado y entender por qué:
 
-- **Facturado** (azul sólido): lo de las citas con fecha hasta cada día, por `dia`.
-- **Proyectado** (azul claro `#93B4FF`): lo que ya estaba agendado cada día, por
+- **Facturado** (verde `#16A34A`): lo de las citas con fecha hasta cada día, por `dia`.
+- **Proyectado** (azul `#2563EB`): lo que ya estaba agendado cada día, por
   `diaVisto`. Arranca por encima de cero el día 1, con lo agendado desde antes.
 - El espacio entre las dos hasta hoy va sombreado, y la distancia de hoy lleva su
   cifra: "faltan por pasar $ X M".

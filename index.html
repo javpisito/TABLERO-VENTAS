@@ -144,8 +144,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
   font-family:'Martian Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--humo)}
 .leyenda span{display:flex;align-items:center;gap:.4rem}
 .leyenda i{width:.85rem;height:.28rem;border-radius:999px;background:var(--azul);display:block}
-.leyenda .porvenir i{background:transparent;border-top:3px dotted var(--azul);height:0}
-.leyenda .proyectado i{background:#93B4FF}
+.leyenda .facturado i{background:#16A34A}
+.leyenda .porvenir i{background:transparent;border-top:3px dotted #16A34A;height:0}
+.leyenda .proyectado i{background:#2563EB}
 .leyenda .sinVisto{display:none;color:var(--tinta-2)}
 .leyenda .meta i{background:transparent;border-top:2px dashed var(--humo);height:0;width:1rem}
 
@@ -496,20 +497,22 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .reja{stroke:#EDF1F8;stroke-width:1}
 .ejeY{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
 .ejeX{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:middle}
-.areaBrecha{fill:rgba(147,180,255,.18)}
-.lineaProyectado{fill:none;stroke:#93B4FF;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
-.lineaProyectadoResto{stroke:#93B4FF;stroke-width:2;stroke-dasharray:3 7;opacity:.8}
+/* Facturado en verde y proyectado en azul: pedido del analista el 20 de noviembre
+   de 2026, para que las dos líneas no se confundan a tres metros. */
+.areaBrecha{fill:rgba(37,99,235,.08)}
+.lineaProyectado{fill:none;stroke:#2563EB;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+.lineaProyectadoResto{stroke:#2563EB;stroke-width:2;stroke-dasharray:3 7;opacity:.8}
 .brechaHoy{stroke:#33425C;stroke-width:2}
 .rotuloBrecha{fill:#33425C;font-family:'Martian Mono',monospace;font-size:15px}
-.lineaFirme{fill:none;stroke:#2563EB;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+.lineaFirme{fill:none;stroke:#16A34A;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
 /* Lo facturado por venir es facturado: va en su azul, punteado. En azul claro se
    confundía con la raya de proyectado que corre al lado de hoy en adelante. */
-.lineaPorVenir{fill:none;stroke:#2563EB;stroke-width:4;stroke-dasharray:9 8;
+.lineaPorVenir{fill:none;stroke:#16A34A;stroke-width:4;stroke-dasharray:9 8;
   stroke-linejoin:round;stroke-linecap:round}
 .lineaMeta{stroke:#7A8AA3;stroke-width:2;stroke-dasharray:7 6}
 .rotuloMeta{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
 .lineaHoy{stroke:#C7D9FF;stroke-width:2}
-.puntoHoy{fill:#2563EB;stroke:#fff;stroke-width:3}
+.puntoHoy{fill:#16A34A;stroke:#fff;stroke-width:3}
 
 #papelitos{position:fixed;inset:0;z-index:71;pointer-events:none;overflow:hidden}
 .papelito{position:absolute;top:-4vh;width:.85rem;height:1.3rem;will-change:transform}
@@ -627,7 +630,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div class="rotulo-col">Evolución del mes <em id="rotuloDia"></em></div>
       <div id="grafico"></div>
       <div class="leyenda">
-        <span><i></i>facturado</span>
+        <span class="facturado"><i></i>facturado</span>
         <span class="porvenir"><i></i>citas por venir</span>
         <span class="proyectado"><i></i>proyectado</span>
         <span class="meta"><i></i>meta</span>
@@ -707,7 +710,7 @@ footer{position:fixed;right:2.2rem;bottom:.7rem;font-family:'Martian Mono',monos
       <div class="rotulo-col">Evolución del cliente</div>
       <div class="graficoInforme" id="iGrafico"></div>
       <div class="leyenda">
-        <span><i></i>facturado</span>
+        <span class="facturado"><i></i>facturado</span>
         <span class="porvenir"><i></i>citas por venir</span>
         <span class="proyectado"><i></i>proyectado</span>
         <span class="meta" id="iLeyendaMeta"><i></i>meta</span>
