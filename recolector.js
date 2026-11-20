@@ -22,7 +22,7 @@
  * el que dejó el disparador en la última corrida: si no coinciden es que el código
  * está guardado pero no publicado, que es la forma más común de perder una tarde.
  */
-var VERSION = '2026-09-30.1';
+var VERSION = '2026-11-20.1';
 
 var ZONA = 'America/Bogota';
 
@@ -555,7 +555,10 @@ function doGet(e){
         monto: Number(r.monto) || 0,
         estado: String(r.estado), producto: String(r.producto || ''),
         ts: aISO(r.fecha),
-        dia: Number(diaClave(r.fecha, zonaHoja).slice(-2)) || 0
+        dia: Number(diaClave(r.fecha, zonaHoja).slice(-2)) || 0,
+        // El día en que la venta apareció en el Registro: con esto la gráfica
+        // dibuja cuánto del mes ya estaba agendado cada día.
+        diaVisto: diaVistoDe(r.visto_en, mesActual)
       };
     }),
     avisos: unicos(avisos)
@@ -658,6 +661,21 @@ function diaClave(v, zona){
   var d = (v instanceof Date) ? v : new Date(v);
   if (isNaN(d.getTime())) return '';
   return Utilities.formatDate(d, zona || ZONA, 'yyyy-MM-dd');
+}
+
+/**
+ * El día del mes en curso en que una venta apareció en el Registro (visto_en), en
+ * hora de la oficina. Con esto el televisor dibuja cuánto estaba agendado cada día.
+ *
+ * Es 0 cuando apareció antes del 1 del mes —se agendó desde antes y cuenta desde
+ * el primer día— y también cuando la celda está vacía o no es una fecha: una venta
+ * sin rastro de cuándo entró se toma como agendada desde el principio.
+ */
+function diaVistoDe(visto, mesActual){
+  if (!visto) return 0;
+  var d = (visto instanceof Date) ? visto : new Date(visto);
+  if (isNaN(d.getTime())) return 0;
+  return mesClave(d, ZONA) === mesActual ? Number(diaClave(d, ZONA).slice(-2)) : 0;
 }
 
 function inicioDelMes(){

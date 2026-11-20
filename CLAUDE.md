@@ -454,10 +454,16 @@ JSON que devuelve `doGet`:
   "clientes":   [{ "cliente": "", "facturado": 0, "proyectado": 0, "ventas": 0, "inversion": 0, "metaMes": 0,
                    "alcance": 0, "impresiones": 0, "frecuencia": 0 }],
   "vendedoras": [{ "vendedora": "", "facturado": 0, "proyectado": 0, "ventas": 0 }],
-  "ventas":     [{ "id": "", "cliente": "", "vendedora": "", "monto": 0, "estado": "", "producto": "", "ts": "", "dia": 18 }],
+  "ventas":     [{ "id": "", "cliente": "", "vendedora": "", "monto": 0, "estado": "", "producto": "", "ts": "", "dia": 18,
+                   "diaVisto": 2 }],
   "avisos": []
 }
 ```
+
+`diaVisto` es el día del mes en que la venta apareció en el `Registro` (columna
+`visto_en`, que se escribe al recogerla por primera vez y nunca se sobrescribe), en hora
+de Bogotá. Vale `0` si apareció antes del 1 del mes o si la celda está vacía. Lo usa la
+línea de proyectado de la gráfica; lo calcula el servidor, igual que `dia`.
 
 `alcance`, `impresiones` y `frecuencia` son de lo que va del mes en la cuenta de Meta de
 cada cliente. En `totales` hay `impresiones` y **no** hay `alcance`: no se suma entre

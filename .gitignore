@@ -16,3 +16,6 @@ audio/
 # Fotos de personas reales en la propaganda. El repo es publico y Pages las
 # publicaria en internet; viven solo en la copia del televisor, como audio/.
 propaganda/fotos/
+
+# Registro de avance de los planes (superpowers)
+.superpowers/
