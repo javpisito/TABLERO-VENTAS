@@ -478,8 +478,7 @@ JSON que devuelve `doGet`:
 `diaVisto` es el día del mes en que la venta apareció en el `Registro` (columna
 `visto_en`, que se escribe al recogerla por primera vez y nunca se sobrescribe), en hora
 de Bogotá. Vale `0` si apareció antes del 1 del mes o si la celda está vacía. Lo usa la
-línea de proyectado de la gráfica entre el 20 y el 24 de noviembre de 2026; desde entonces la
-gráfica cuenta por día de cita y no lo usa, pero sigue llegando. Lo calcula el servidor, igual que `dia`.
+línea de proyectado de la gráfica; lo calcula el servidor, igual que `dia`.
 
 `alcance`, `impresiones` y `frecuencia` son de lo que va del mes en la cuenta de Meta de
 cada cliente. En `totales` hay `impresiones` y **no** hay `alcance`: no se suma entre
@@ -577,37 +576,42 @@ son cinco indicadores y no doce, las cifras del eje van en millones (`$12 M`, no
 `$12.000.000`) y no hay tablas de detalle. Si algo no se alcanza a leer desde el fondo de
 la oficina, no va.
 
-**La gráfica se dibuja a mano en SVG**, sin librerías, en `pintarGrafico()`. Desde el 24
-de noviembre de 2026, a pedido del analista, muestra a dónde puede llegar el mes y en
-qué días:
+**La gráfica se dibuja a mano en SVG**, sin librerías, en `pintarGrafico()`. Desde el 20
+de noviembre de 2026 son dos curvas, a pedido del analista, para ver qué tan lejos va lo
+facturado de lo proyectado y entender por qué:
 
-- **Proyectado** (azul `#2563EB`) cuenta cada venta en el día de su cita: arranca el
-  día 1 con lo de ese día, sube el día de cada cita y termina en el total del mes. De
-  hoy en adelante muestra en qué días entra lo que falta: el futuro al que se aspira.
-- **Facturado** (verde `#16A34A`) es lo mismo hasta hoy —lo que ya pasó ya se hizo
-  efectivo— y se corta en la línea de hoy. Hasta hoy las dos van juntas, y de hoy en
-  adelante se separan.
-- Lo que falta va sombreado entre la azul y el nivel de hoy, con su cifra "faltan
-  por pasar $X M" a la derecha de hoy, debajo del punto verde. A fin de mes, si no
-  cabe, se acorta a "faltan $X M"; si ni así cabe, va a la izquierda de hoy, encima
-  de la línea. Nunca la cruza la raya de hoy ni una línea.
+- **Facturado** (verde `#16A34A`): lo de las citas con fecha hasta cada día, por `dia`.
+- **Proyectado** (azul `#2563EB`): lo que ya estaba agendado cada día, por
+  `diaVisto`. Arranca por encima de cero el día 1, con lo agendado desde antes.
+- El espacio entre las dos hasta hoy va sombreado, y la distancia de hoy lleva su
+  cifra: "faltan por pasar $ X M".
+- Las dos arrancan el día 1 con su valor, no desde cero: lo de las citas del 1 ya
+  suma ese día.
+- Facturado se corta en la línea de hoy y va siempre por debajo: de hoy en adelante
+  no ha pasado nada.
+- Proyectado va continuo hasta el último día: hasta hoy, lo agendado cada día; de
+  hoy al final, plano con el total agendado. A medida que pasan los días la verde se
+  le acerca, y las dos se encuentran el último día.
+- La cifra "faltan por pasar $X M" va a la derecha de hoy, debajo de la azul plana.
+  A fin de mes, si no cabe, se acorta a "faltan $X M"; y si ni así cabe, va a la
+  izquierda de hoy, encima de la azul. Nunca la cruza la raya de hoy ni una línea.
 
-El camino hasta acá, para no repetirlo: del 20 al 24 de noviembre la azul fue "lo que
-ya estaba agendado cada día" (por `diaVisto`), por encima de la verde, y de hoy en
-adelante se probó facturado punteado, una raya azul plana y una recta de lo facturado
-al total. La raya plana se leía como "no hay ventas esos días" y no decía cuándo
-llegaba la plata, así que se cambió a contar por día de cita. Con eso, hasta hoy las
-dos líneas coinciden y se pierde la distancia entre lo agendado y lo facturado en el
-pasado: el analista lo eligió sabiéndolo.
+Así quedó el 24 de noviembre de 2026, después de probar con el analista facturado
+punteado hacia adelante, una raya azul plana punteada y una recta de lo facturado hoy
+al total proyectado. Ninguna de esas se lee como el modelo; esta sí.
 
-`diaVisto` (y la memoria del recolector que lo protege) sigue llegando en el JSON pero
-la gráfica ya no lo usa. Se dejó porque cuesta poco y es la única forma de volver a la
-versión con distancia en el pasado si se pide. `seriesDelMes()` sigue armando las dos
-series; la gráfica usa solo la de día de cita.
+Las series las arma `seriesDelMes()`. Una venta cuenta en proyectado desde el día que
+llegue primero, su cita o el día en que apareció: una cita del 3 digitada el 20,
+contada solo desde el 20, dejaba lo facturado por encima de lo agendado, y lo facturado
+va siempre por dentro.
 
-La barra de reparto de la distancia que salió en el boceto quedó por fuera a pedido del
-analista. La línea de la meta va de referencia, con la regla de siempre; su rótulo va al
-comienzo de la línea, porque al final del mes la azul sube por encima de la meta y lo tapaba.
+Dos límites del dato, dichos para que no sorprendan: `visto_en` es cuándo la vio el
+recolector, no cuándo se agendó (un mes digitado tarde sube junto el día de la
+digitación, salvo lo que ya tenía cita), y una venta anulada sale de toda la curva
+hacia atrás, porque el Registro no guarda el día de la anulación. Si el JSON no trae
+`diaVisto`, la línea de proyectado no se dibuja y la leyenda dice "falta actualizar el
+recolector". La barra de reparto de la distancia que salió en el boceto quedó por fuera
+a pedido del analista. La línea de la meta va de referencia, con la regla de siempre.
 
 Las pruebas viven en `pruebas/`: `node pruebas/probar-recolector.js` para el
 recolector, y `pruebas/probar-grafica.js` se corre dentro de la página (ver su cabecera).
