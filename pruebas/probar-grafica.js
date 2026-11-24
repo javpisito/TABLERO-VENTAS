@@ -60,9 +60,12 @@
   // La cifra de lo que falta va a la derecha de hoy, debajo de la azul plana, si cabe
   // completa; si no, a la izquierda, entre las dos curvas.
   const rotulo = document.querySelector('#grafico .rotuloBrecha');
+  // A la derecha va debajo de la azul plana; a la izquierda (fin de mes) va encima
+  // de la azul, que viene subiendo, así que arriba está libre.
   if (rotulo && proy){
-    const pr = puntos(proy);
-    debe(parseFloat(rotulo.getAttribute('y')) > pr[pr.length - 1][1] + 15, 'la cifra va debajo de la azul, sin tocarla');
+    const pr = puntos(proy), yAzulHoy = pr[pr.length - 1][1], yTexto = parseFloat(rotulo.getAttribute('y'));
+    if (rotulo.getAttribute('text-anchor') === 'start') debe(yTexto > yAzulHoy + 15, 'la cifra va debajo de la azul, sin tocarla');
+    else debe(yTexto < yAzulHoy - 5, 'a la izquierda, la cifra va encima de la azul');
   }
   if (rotulo && estado.datos.dia <= estado.datos.diasDelMes * 0.6){
     debe(rotulo.getAttribute('text-anchor') === 'start', 'la cifra va a la derecha de hoy cuando cabe');
@@ -72,6 +75,9 @@
   if (rotulo){
     const caja = rotulo.getBBox();
     debe(caja.x >= 0 && caja.x + caja.width <= 1000, 'el rótulo de la distancia entra completo en la gráfica');
+    // y no lo cruza la raya de hoy
+    const xHoy = parseFloat(document.querySelector('#grafico .brechaHoy').getAttribute('x1'));
+    debe(caja.x >= xHoy || caja.x + caja.width <= xHoy, 'la raya de hoy no cruza la cifra');
   }
 
   return fallas;

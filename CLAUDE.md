@@ -592,8 +592,9 @@ facturado de lo proyectado y entender por qué:
 - Proyectado va continuo hasta el último día: hasta hoy, lo agendado cada día; de
   hoy al final, plano con el total agendado. A medida que pasan los días la verde se
   le acerca, y las dos se encuentran el último día.
-- La cifra "faltan por pasar" va a la derecha de hoy, debajo de la azul plana, si
-  cabe completa; si no, alineada al final del mes, también debajo de la azul.
+- La cifra "faltan por pasar $X M" va a la derecha de hoy, debajo de la azul plana.
+  A fin de mes, si no cabe, se acorta a "faltan $X M"; y si ni así cabe, va a la
+  izquierda de hoy, encima de la azul. Nunca la cruza la raya de hoy ni una línea.
 
 Así quedó el 24 de noviembre de 2026, después de probar con el analista facturado
 punteado hacia adelante, una raya azul plana punteada y una recta de lo facturado hoy
