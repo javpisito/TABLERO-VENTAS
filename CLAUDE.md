@@ -585,14 +585,19 @@ facturado de lo proyectado y entender por qué:
   `diaVisto`. Arranca por encima de cero el día 1, con lo agendado desde antes.
 - El espacio entre las dos hasta hoy va sombreado, y la distancia de hoy lleva su
   cifra: "faltan por pasar $ X M".
-- Facturado termina en la línea de hoy: de ahí en adelante no ha pasado nada.
-  De hoy en adelante va una recta azul punteada desde lo facturado hoy (el punto
-  verde) hasta el total proyectado el último día (un punto azul): es el camino que
-  falta y el ritmo que pide. La cifra "faltan por pasar" va encima del final de la
-  recta; si choca con el rótulo de la meta, sube un renglón. Así quedó el 24 de
-  noviembre de 2026, a pedido del analista, después de probar facturado punteado
-  hacia adelante (20 de noviembre) y una raya plana a la altura del proyectado, que
-  no decía cuánto faltaba.
+- Las dos arrancan el día 1 con su valor, no desde cero: lo de las citas del 1 ya
+  suma ese día.
+- Facturado se corta en la línea de hoy y va siempre por debajo: de hoy en adelante
+  no ha pasado nada.
+- Proyectado va continuo hasta el último día: hasta hoy, lo agendado cada día; de
+  hoy al final, plano con el total agendado. A medida que pasan los días la verde se
+  le acerca, y las dos se encuentran el último día.
+- La cifra "faltan por pasar" va a la derecha de hoy, debajo de la azul plana, si
+  cabe completa; si no, a la izquierda, entre las dos curvas.
+
+Así quedó el 24 de noviembre de 2026, después de probar con el analista facturado
+punteado hacia adelante, una raya azul plana punteada y una recta de lo facturado hoy
+al total proyectado. Ninguna de esas se lee como el modelo; esta sí.
 
 Las series las arma `seriesDelMes()`. Una venta cuenta en proyectado desde el día que
 llegue primero, su cita o el día en que apareció: una cita del 3 digitada el 20,

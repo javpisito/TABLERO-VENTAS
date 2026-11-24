@@ -500,7 +500,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
    de 2026, para que las dos líneas no se confundan a tres metros. */
 .areaBrecha{fill:rgba(37,99,235,.08)}
 .lineaProyectado{fill:none;stroke:#2563EB;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
-.lineaProyectadoResto{stroke:#2563EB;stroke-width:4;stroke-dasharray:9 8;stroke-linecap:round}
 .brechaHoy{stroke:#33425C;stroke-width:2}
 .rotuloBrecha{fill:#33425C;font-family:'Martian Mono',monospace;font-size:15px}
 .lineaFirme{fill:none;stroke:#16A34A;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
@@ -508,7 +507,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .rotuloMeta{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
 .lineaHoy{stroke:#C7D9FF;stroke-width:2}
 .puntoHoy{fill:#16A34A;stroke:#fff;stroke-width:3}
-.puntoProyectado{fill:#2563EB;stroke:#fff;stroke-width:3}
 
 #papelitos{position:fixed;inset:0;z-index:71;pointer-events:none;overflow:hidden}
 .papelito{position:absolute;top:-4vh;width:.85rem;height:1.3rem;will-change:transform}
@@ -1981,40 +1979,40 @@ function pintarGrafico(d, opc){
   }
 
   // ── las dos curvas ──
-  // Facturado (azul) es lo que ya se hizo efectivo; proyectado (azul claro) es lo
-  // que ya estaba agendado. El espacio entre las dos es lo agendado que todavía no
-  // llega. Desde el 20 de noviembre de 2026: antes era una sola curva.
+  // Facturado (verde) es lo que ya se hizo efectivo; proyectado (azul) es lo que ya
+  // estaba agendado. El espacio entre las dos es lo agendado que todavía no llega.
+  // Así quedó el 24 de noviembre de 2026, a pedido del analista:
+  // - las dos arrancan el día 1 con su valor, no desde cero (lo de las citas del 1
+  //   ya suma ese día);
+  // - facturado sube hasta hoy y se corta ahí: de ahí en adelante no ha pasado nada;
+  // - proyectado va continuo hasta el último día: hasta hoy, lo agendado cada día;
+  //   de hoy al final, plano con el total agendado. A medida que pasan los días la
+  //   verde se le acerca, y las dos se encuentran el último día.
   const tramo = (serie, a, b) =>
     Array.from({length: b - a + 1}, (_, k) => `${x(a + k)},${y(serie[a + k])}`).join(' ');
 
   if (conVisto){
-    // el espacio entre las dos, hasta hoy: arriba proyectado, abajo facturado de vuelta
-    const vuelta = Array.from({length: diaHoy + 1}, (_, k) => `${x(diaHoy - k)},${y(facturado[diaHoy - k])}`).join(' ');
-    partes.push(`<polygon class="areaBrecha" points="${tramo(proyectado, 0, diaHoy)} ${vuelta}"/>`);
+    // el espacio entre las dos, del día 1 a hoy: arriba proyectado, abajo facturado de vuelta
+    const vuelta = Array.from({length: diaHoy}, (_, k) => `${x(diaHoy - k)},${y(facturado[diaHoy - k])}`).join(' ');
+    partes.push(`<polygon class="areaBrecha" points="${tramo(proyectado, 1, diaHoy)} ${vuelta}"/>`);
+    const hastaFin = diaHoy < dias ? ` ${x(dias)},${y(proyectado[diaHoy])}` : '';
+    partes.push(`<polyline class="lineaProyectado" points="${tramo(proyectado, 1, diaHoy)}${hastaFin}"/>`);
   }
-  // Facturado termina en la línea de hoy: de ahí en adelante no ha pasado nada.
-  // De hoy en adelante va una recta punteada desde lo facturado hoy (el punto
-  // verde) hasta el total proyectado el último día: es el camino que falta y el
-  // ritmo que pide. Pedido del analista el 24 de noviembre de 2026; antes era una
-  // raya plana a la altura del proyectado, que no decía cuánto faltaba.
-  if (diaHoy < dias && conVisto){
-    partes.push(`<line x1="${x(diaHoy)}" y1="${y(facturado[diaHoy])}" x2="${x(dias)}" y2="${y(proyectado[diaHoy])}" class="lineaProyectadoResto"/>`);
-    partes.push(`<circle cx="${x(dias)}" cy="${y(proyectado[diaHoy])}" r="6" class="puntoProyectado"/>`);
-  }
-  if (conVisto) partes.push(`<polyline class="lineaProyectado" points="${tramo(proyectado, 0, diaHoy)}"/>`);
-  partes.push(`<polyline class="lineaFirme" points="${tramo(facturado, 0, diaHoy)}"/>`);
+  partes.push(`<polyline class="lineaFirme" points="${tramo(facturado, 1, diaHoy)}"/>`);
 
   // ── la distancia de hoy, con su cifra ──
   const brecha = conVisto ? proyectado[diaHoy] - facturado[diaHoy] : 0;
   if (brecha > 0){
     const yArriba = y(proyectado[diaHoy]), yAbajo = y(facturado[diaHoy]);
     partes.push(`<line x1="${x(diaHoy)}" y1="${yArriba}" x2="${x(diaHoy)}" y2="${yAbajo}" class="brechaHoy"/>`);
-    // La cifra va al final de la recta, encima del último día, alineada a la derecha:
-    // ahí siempre cabe y no la cruza ninguna línea. Si queda pegada al rótulo de la
-    // meta (que también va a la derecha), sube un renglón.
-    let yCifra = yArriba - 14;
-    if (metaVisible && Math.abs(yCifra - (y(metaVisible) - 9)) < 22) yCifra = Math.min(yCifra, y(metaVisible) - 9) - 22;
-    partes.push(`<text x="${G.ancho - G.der}" y="${yCifra}" class="rotuloBrecha" text-anchor="end">faltan por pasar ${enMillones(brecha)}</text>`);
+    // A la derecha de la raya, debajo de la azul plana: de hoy en adelante ese lado
+    // está libre porque la verde se corta en hoy. Va a la derecha solo si cabe
+    // completa (el largo se estima por letras: Martian Mono a 15px, unos 9,2px cada
+    // una); si no, a la izquierda, a media altura entre las dos curvas.
+    const texto = 'faltan por pasar ' + enMillones(brecha);
+    const derecha = x(diaHoy) + 12 + texto.length * 9.2 <= G.ancho - G.der;
+    partes.push(`<text x="${x(diaHoy) + (derecha ? 12 : -12)}" y="${derecha ? yArriba + 26 : (yArriba + yAbajo) / 2 + 5}"
+      class="rotuloBrecha" text-anchor="${derecha ? 'start' : 'end'}">${texto}</text>`);
   }
 
   // ── la meta, cuando cabe ──

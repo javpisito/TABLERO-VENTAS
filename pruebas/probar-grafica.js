@@ -30,45 +30,42 @@
   const n = seriesDelMes([], 30);
   debe(n.conVisto === true && n.proyectado[30] === 0 && n.facturado[30] === 0, 'mes sin ventas en cero');
 
-  // Pedido del analista el 20 de noviembre de 2026: facturado verde y termina en
-  // la línea de hoy; proyectado azul, y es el único que sigue, punteado y plano,
-  // con lo que ya está agendado para el resto del mes.
+  // Así quedó el 24 de noviembre de 2026, a pedido del analista:
+  // - las dos líneas arrancan el día 1 con su valor, no desde cero;
+  // - facturado (verde) sube hasta hoy, se corta ahí y va siempre por debajo;
+  // - proyectado (azul) es continuo hasta el último día: lo agendado cada día hasta
+  //   hoy y, de ahí al final, plano con el total agendado. Sin recta ni punteada.
   const firme = document.querySelector('#grafico .lineaFirme');
   const proy = document.querySelector('#grafico .lineaProyectado');
-  const resto = document.querySelector('#grafico .lineaProyectadoResto');
+  const punto = document.querySelector('#grafico .puntoHoy');
   const color = el => getComputedStyle(el).stroke;
+  const puntos = el => el.getAttribute('points').trim().split(/\s+/).map(p => p.split(',').map(Number));
+  const xDia1 = 96 + 886 / estado.datos.diasDelMes;
   debe(!document.querySelector('#grafico .lineaPorVenir'), 'facturado termina en la línea de hoy');
+  debe(!document.querySelector('#grafico .lineaProyectadoResto'), 'ya no hay recta punteada');
   if (firme && proy){
     debe(color(firme) === 'rgb(22, 163, 74)', 'facturado va en verde #16A34A');
     debe(color(proy) === 'rgb(37, 99, 235)', 'proyectado va en azul #2563EB');
-  }
-  if (resto && proy){
-    debe(color(resto) === color(proy), 'la punteada de hoy en adelante es la de proyectado');
-    debe(getComputedStyle(resto).strokeDasharray !== 'none', 'la de hoy en adelante va punteada');
-    debe(parseFloat(getComputedStyle(resto).strokeWidth) >= 3, 'la punteada se alcanza a ver a tres metros');
-    debe(getComputedStyle(resto).opacity === '1', 'la punteada no va tenue');
-  }
-
-  // Pedido del analista el 24 de noviembre de 2026: de hoy en adelante, una recta
-  // desde lo facturado hoy (el punto verde) hasta el total proyectado el último día.
-  // Muestra cuánto falta para llegar y a qué ritmo.
-  const punto = document.querySelector('#grafico .puntoHoy');
-  if (resto && punto && proy){
-    const pts = proy.getAttribute('points').trim().split(/\s+/);
-    const finAzul = pts[pts.length - 1].split(',').map(Number);
-    const n = a => Math.round(parseFloat(resto.getAttribute(a)));
-    debe(n('x1') === Math.round(parseFloat(punto.getAttribute('cx'))) && n('y1') === Math.round(parseFloat(punto.getAttribute('cy'))),
-      'la recta sale del punto verde de hoy');
-    debe(n('x2') === 982, 'la recta llega al último día del mes');
-    debe(n('y2') === Math.round(finAzul[1]), 'la recta llega al total proyectado');
+    debe(getComputedStyle(proy).strokeDasharray === 'none', 'proyectado va continuo');
+    const f = puntos(firme), pr = puntos(proy);
+    debe(Math.abs(f[0][0] - xDia1) < 0.5, 'facturado arranca el día 1');
+    debe(Math.abs(pr[0][0] - xDia1) < 0.5, 'proyectado arranca el día 1');
+    debe(Math.abs(pr[pr.length - 1][0] - 982) < 0.5, 'proyectado llega al último día del mes');
+    debe(punto && Math.abs(f[f.length - 1][0] - parseFloat(punto.getAttribute('cx'))) < 0.5, 'facturado se corta en hoy');
+    // por debajo: en el mismo día, la verde nunca queda más arriba (y más chica) que la azul
+    const yAzul = {}; pr.forEach(([x, y]) => { yAzul[x.toFixed(1)] = y; });
+    debe(f.every(([x, y]) => yAzul[x.toFixed(1)] == null || y >= yAzul[x.toFixed(1)] - 0.01), 'facturado va siempre por debajo de proyectado');
   }
 
-  // La cifra de lo que falta va al final de la recta, sobre el último día.
+  // La cifra de lo que falta va a la derecha de hoy, debajo de la azul plana, si cabe
+  // completa; si no, a la izquierda, entre las dos curvas.
   const rotulo = document.querySelector('#grafico .rotuloBrecha');
-  if (rotulo && resto){
-    debe(rotulo.getAttribute('text-anchor') === 'end', 'la cifra va alineada al final de la recta');
-    debe(Math.abs(parseFloat(rotulo.getAttribute('x')) - 982) < 1, 'la cifra va sobre el último día');
-    debe(parseFloat(rotulo.getAttribute('y')) < parseFloat(resto.getAttribute('y2')), 'la cifra va encima del final de la recta');
+  if (rotulo && rotulo.getAttribute('text-anchor') === 'start' && proy){
+    const pr = puntos(proy);
+    debe(parseFloat(rotulo.getAttribute('y')) > pr[pr.length - 1][1] + 15, 'la cifra va debajo de la azul, sin tocarla');
+  }
+  if (rotulo && estado.datos.dia <= estado.datos.diasDelMes * 0.6){
+    debe(rotulo.getAttribute('text-anchor') === 'start', 'la cifra va a la derecha de hoy cuando cabe');
   }
 
   // El rótulo entra completo en la gráfica: a fin de mes, a la derecha no cabe.
