@@ -2007,11 +2007,14 @@ function pintarGrafico(d, opc){
     partes.push(`<line x1="${x(diaHoy)}" y1="${yArriba}" x2="${x(diaHoy)}" y2="${yAbajo}" class="brechaHoy"/>`);
     // A la derecha de la raya, debajo de la punteada azul: como facturado termina en
     // hoy, ese lado está libre. A la izquierda, con una distancia chica, quedaba
-    // montado sobre la línea de proyectado. Solo al final del mes, donde a la
-    // derecha no cabe, va a la izquierda, a media altura entre las dos curvas.
-    const derecha = diaHoy <= dias * 0.8;
+    // montado sobre la línea de proyectado. Va a la derecha solo si cabe completo:
+    // el 24 de noviembre se cortaba en el borde. El largo se estima por letras
+    // (Martian Mono a 15px, unos 9,2px cada una); si no cabe, va a la izquierda, a
+    // media altura entre las dos curvas.
+    const texto = 'faltan por pasar ' + enMillones(brecha);
+    const derecha = x(diaHoy) + 12 + texto.length * 9.2 <= G.ancho - G.der;
     partes.push(`<text x="${x(diaHoy) + (derecha ? 12 : -12)}" y="${derecha ? yArriba + 26 : (yArriba + yAbajo) / 2 + 5}"
-      class="rotuloBrecha" text-anchor="${derecha ? 'start' : 'end'}">faltan por pasar ${enMillones(brecha)}</text>`);
+      class="rotuloBrecha" text-anchor="${derecha ? 'start' : 'end'}">${texto}</text>`);
   }
 
   // ── la meta, cuando cabe ──

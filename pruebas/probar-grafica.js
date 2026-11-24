@@ -54,11 +54,19 @@
   // distancia chica, quedaba montado sobre la línea de proyectado. Solo al final
   // del mes, donde a la derecha no cabe, va a la izquierda.
   const rotulo = document.querySelector('#grafico .rotuloBrecha');
-  if (rotulo && estado.datos && estado.datos.dia <= estado.datos.diasDelMes * 0.8){
+  if (rotulo && estado.datos && estado.datos.dia <= estado.datos.diasDelMes * 0.6){
     debe(rotulo.getAttribute('text-anchor') === 'start', 'el rótulo de la distancia va a la derecha de hoy');
+  }
+  if (rotulo && rotulo.getAttribute('text-anchor') === 'start'){
     const yTexto = parseFloat(rotulo.getAttribute('y'));
     const yPunteada = parseFloat(document.querySelector('#grafico .lineaProyectadoResto').getAttribute('y1'));
     debe(yTexto > yPunteada + 15, 'el rótulo va debajo de la punteada, sin tocarla');
+  }
+
+  // El rótulo entra completo en la gráfica: a fin de mes, a la derecha no cabe.
+  if (rotulo){
+    const caja = rotulo.getBBox();
+    debe(caja.x >= 0 && caja.x + caja.width <= 1000, 'el rótulo de la distancia entra completo en la gráfica');
   }
 
   return fallas;
