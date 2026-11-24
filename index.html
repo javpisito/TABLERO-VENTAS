@@ -508,6 +508,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .rotuloMeta{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
 .lineaHoy{stroke:#C7D9FF;stroke-width:2}
 .puntoHoy{fill:#16A34A;stroke:#fff;stroke-width:3}
+.puntoProyectado{fill:#2563EB;stroke:#fff;stroke-width:3}
 
 #papelitos{position:fixed;inset:0;z-index:71;pointer-events:none;overflow:hidden}
 .papelito{position:absolute;top:-4vh;width:.85rem;height:1.3rem;will-change:transform}
@@ -1992,10 +1993,13 @@ function pintarGrafico(d, opc){
     partes.push(`<polygon class="areaBrecha" points="${tramo(proyectado, 0, diaHoy)} ${vuelta}"/>`);
   }
   // Facturado termina en la línea de hoy: de ahí en adelante no ha pasado nada.
-  // Proyectado es el único que sigue, punteado y plano, con lo que ya está
-  // agendado para el resto del mes. Pedido del analista el 20 de noviembre de 2026.
-  if (diaHoy < dias){
-    if (conVisto) partes.push(`<line x1="${x(diaHoy)}" y1="${y(proyectado[diaHoy])}" x2="${x(dias)}" y2="${y(proyectado[diaHoy])}" class="lineaProyectadoResto"/>`);
+  // De hoy en adelante va una recta punteada desde lo facturado hoy (el punto
+  // verde) hasta el total proyectado el último día: es el camino que falta y el
+  // ritmo que pide. Pedido del analista el 24 de noviembre de 2026; antes era una
+  // raya plana a la altura del proyectado, que no decía cuánto faltaba.
+  if (diaHoy < dias && conVisto){
+    partes.push(`<line x1="${x(diaHoy)}" y1="${y(facturado[diaHoy])}" x2="${x(dias)}" y2="${y(proyectado[diaHoy])}" class="lineaProyectadoResto"/>`);
+    partes.push(`<circle cx="${x(dias)}" cy="${y(proyectado[diaHoy])}" r="6" class="puntoProyectado"/>`);
   }
   if (conVisto) partes.push(`<polyline class="lineaProyectado" points="${tramo(proyectado, 0, diaHoy)}"/>`);
   partes.push(`<polyline class="lineaFirme" points="${tramo(facturado, 0, diaHoy)}"/>`);
@@ -2005,16 +2009,12 @@ function pintarGrafico(d, opc){
   if (brecha > 0){
     const yArriba = y(proyectado[diaHoy]), yAbajo = y(facturado[diaHoy]);
     partes.push(`<line x1="${x(diaHoy)}" y1="${yArriba}" x2="${x(diaHoy)}" y2="${yAbajo}" class="brechaHoy"/>`);
-    // A la derecha de la raya, debajo de la punteada azul: como facturado termina en
-    // hoy, ese lado está libre. A la izquierda, con una distancia chica, quedaba
-    // montado sobre la línea de proyectado. Va a la derecha solo si cabe completo:
-    // el 24 de noviembre se cortaba en el borde. El largo se estima por letras
-    // (Martian Mono a 15px, unos 9,2px cada una); si no cabe, va a la izquierda, a
-    // media altura entre las dos curvas.
-    const texto = 'faltan por pasar ' + enMillones(brecha);
-    const derecha = x(diaHoy) + 12 + texto.length * 9.2 <= G.ancho - G.der;
-    partes.push(`<text x="${x(diaHoy) + (derecha ? 12 : -12)}" y="${derecha ? yArriba + 26 : (yArriba + yAbajo) / 2 + 5}"
-      class="rotuloBrecha" text-anchor="${derecha ? 'start' : 'end'}">${texto}</text>`);
+    // La cifra va al final de la recta, encima del último día, alineada a la derecha:
+    // ahí siempre cabe y no la cruza ninguna línea. Si queda pegada al rótulo de la
+    // meta (que también va a la derecha), sube un renglón.
+    let yCifra = yArriba - 14;
+    if (metaVisible && Math.abs(yCifra - (y(metaVisible) - 9)) < 22) yCifra = Math.min(yCifra, y(metaVisible) - 9) - 22;
+    partes.push(`<text x="${G.ancho - G.der}" y="${yCifra}" class="rotuloBrecha" text-anchor="end">faltan por pasar ${enMillones(brecha)}</text>`);
   }
 
   // ── la meta, cuando cabe ──

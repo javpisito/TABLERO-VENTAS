@@ -49,18 +49,26 @@
     debe(getComputedStyle(resto).opacity === '1', 'la punteada no va tenue');
   }
 
-  // El rótulo de la distancia va a la derecha de hoy, debajo de la punteada azul:
-  // como facturado termina en hoy, ese lado está libre. A la izquierda, con una
-  // distancia chica, quedaba montado sobre la línea de proyectado. Solo al final
-  // del mes, donde a la derecha no cabe, va a la izquierda.
-  const rotulo = document.querySelector('#grafico .rotuloBrecha');
-  if (rotulo && estado.datos && estado.datos.dia <= estado.datos.diasDelMes * 0.6){
-    debe(rotulo.getAttribute('text-anchor') === 'start', 'el rótulo de la distancia va a la derecha de hoy');
+  // Pedido del analista el 24 de noviembre de 2026: de hoy en adelante, una recta
+  // desde lo facturado hoy (el punto verde) hasta el total proyectado el último día.
+  // Muestra cuánto falta para llegar y a qué ritmo.
+  const punto = document.querySelector('#grafico .puntoHoy');
+  if (resto && punto && proy){
+    const pts = proy.getAttribute('points').trim().split(/\s+/);
+    const finAzul = pts[pts.length - 1].split(',').map(Number);
+    const n = a => Math.round(parseFloat(resto.getAttribute(a)));
+    debe(n('x1') === Math.round(parseFloat(punto.getAttribute('cx'))) && n('y1') === Math.round(parseFloat(punto.getAttribute('cy'))),
+      'la recta sale del punto verde de hoy');
+    debe(n('x2') === 982, 'la recta llega al último día del mes');
+    debe(n('y2') === Math.round(finAzul[1]), 'la recta llega al total proyectado');
   }
-  if (rotulo && rotulo.getAttribute('text-anchor') === 'start'){
-    const yTexto = parseFloat(rotulo.getAttribute('y'));
-    const yPunteada = parseFloat(document.querySelector('#grafico .lineaProyectadoResto').getAttribute('y1'));
-    debe(yTexto > yPunteada + 15, 'el rótulo va debajo de la punteada, sin tocarla');
+
+  // La cifra de lo que falta va al final de la recta, sobre el último día.
+  const rotulo = document.querySelector('#grafico .rotuloBrecha');
+  if (rotulo && resto){
+    debe(rotulo.getAttribute('text-anchor') === 'end', 'la cifra va alineada al final de la recta');
+    debe(Math.abs(parseFloat(rotulo.getAttribute('x')) - 982) < 1, 'la cifra va sobre el último día');
+    debe(parseFloat(rotulo.getAttribute('y')) < parseFloat(resto.getAttribute('y2')), 'la cifra va encima del final de la recta');
   }
 
   // El rótulo entra completo en la gráfica: a fin de mes, a la derecha no cabe.

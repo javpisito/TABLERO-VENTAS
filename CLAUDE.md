@@ -586,11 +586,13 @@ facturado de lo proyectado y entender por qué:
 - El espacio entre las dos hasta hoy va sombreado, y la distancia de hoy lleva su
   cifra: "faltan por pasar $ X M".
 - Facturado termina en la línea de hoy: de ahí en adelante no ha pasado nada.
-  Proyectado es el único que sigue, punteado y plano hasta el último día, con lo
-  que ya está agendado para el mes. Decidido con el analista el mismo día: se
-  probó con facturado punteado hacia adelante y se prefirió así. La cifra de la
-  distancia va a la derecha de hoy, debajo de la punteada; al final del mes, a la
-  izquierda.
+  De hoy en adelante va una recta azul punteada desde lo facturado hoy (el punto
+  verde) hasta el total proyectado el último día (un punto azul): es el camino que
+  falta y el ritmo que pide. La cifra "faltan por pasar" va encima del final de la
+  recta; si choca con el rótulo de la meta, sube un renglón. Así quedó el 24 de
+  noviembre de 2026, a pedido del analista, después de probar facturado punteado
+  hacia adelante (20 de noviembre) y una raya plana a la altura del proyectado, que
+  no decía cuánto faltaba.
 
 Las series las arma `seriesDelMes()`. Una venta cuenta en proyectado desde el día que
 llegue primero, su cita o el día en que apareció: una cita del 3 digitada el 20,
