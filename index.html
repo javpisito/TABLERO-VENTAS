@@ -504,7 +504,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:2rem;
 .rotuloBrecha{fill:#33425C;font-family:'Martian Mono',monospace;font-size:15px}
 .lineaFirme{fill:none;stroke:#16A34A;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
 .lineaMeta{stroke:#7A8AA3;stroke-width:2;stroke-dasharray:7 6}
-.rotuloMeta{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:end}
+.rotuloMeta{fill:#7A8AA3;font-family:'Martian Mono',monospace;font-size:15px;text-anchor:start}
 .lineaHoy{stroke:#C7D9FF;stroke-width:2}
 .puntoHoy{fill:#16A34A;stroke:#fff;stroke-width:3}
 
@@ -2019,7 +2019,9 @@ function pintarGrafico(d, opc){
   // ── la meta, cuando cabe ──
   if (metaVisible){
     partes.push(`<line x1="${G.izq}" y1="${y(metaVisible)}" x2="${G.ancho - G.der}" y2="${y(metaVisible)}" class="lineaMeta"/>`);
-    partes.push(`<text x="${G.ancho - G.der}" y="${y(metaVisible) - 9}" class="rotuloMeta">meta ${enMillones(metaVisible)}</text>`);
+    // El rótulo va al comienzo de la línea: al final del mes la azul sube por encima
+    // de la meta y lo tapaba. Al comienzo las líneas van bajas.
+    partes.push(`<text x="${G.izq + 8}" y="${y(metaVisible) - 9}" class="rotuloMeta">meta ${enMillones(metaVisible)}</text>`);
   }
   // la leyenda no anuncia una línea que no está dibujada
   const leyendaMeta = opc.leyenda !== undefined ? opc.leyenda : document.querySelector('.leyenda .meta');

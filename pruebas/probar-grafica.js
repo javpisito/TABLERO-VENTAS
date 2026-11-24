@@ -72,6 +72,15 @@
   if (rotulo && d.dia <= d.diasDelMes * 0.6){
     debe(rotulo.getAttribute('text-anchor') === 'start', 'la cifra va a la derecha de hoy cuando cabe');
   }
+  // El rótulo de la meta no lo puede cruzar la azul. A la derecha la azul sube por
+  // encima de la meta a fin de mes; va al comienzo, donde las líneas van bajas.
+  const rotMeta = document.querySelector('#grafico .rotuloMeta');
+  if (rotMeta && proy){
+    const caja = rotMeta.getBBox();
+    const tocadas = puntos(proy).filter(([x, y]) => x >= caja.x - 10 && x <= caja.x + caja.width + 10 && y >= caja.y - 4 && y <= caja.y + caja.height + 4);
+    debe(tocadas.length === 0, 'la azul no cruza el rótulo de la meta');
+  }
+
   if (rotulo){
     const caja = rotulo.getBBox();
     debe(caja.x >= 0 && caja.x + caja.width <= 1000, 'la cifra entra completa en la gráfica');

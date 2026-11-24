@@ -606,7 +606,8 @@ versión con distancia en el pasado si se pide. `seriesDelMes()` sigue armando l
 series; la gráfica usa solo la de día de cita.
 
 La barra de reparto de la distancia que salió en el boceto quedó por fuera a pedido del
-analista. La línea de la meta va de referencia, con la regla de siempre.
+analista. La línea de la meta va de referencia, con la regla de siempre; su rótulo va al
+comienzo de la línea, porque al final del mes la azul sube por encima de la meta y lo tapaba.
 
 Las pruebas viven en `pruebas/`: `node pruebas/probar-recolector.js` para el
 recolector, y `pruebas/probar-grafica.js` se corre dentro de la página (ver su cabecera).
