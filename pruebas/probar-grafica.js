@@ -60,7 +60,7 @@
   // La cifra de lo que falta va a la derecha de hoy, debajo de la azul plana, si cabe
   // completa; si no, a la izquierda, entre las dos curvas.
   const rotulo = document.querySelector('#grafico .rotuloBrecha');
-  if (rotulo && rotulo.getAttribute('text-anchor') === 'start' && proy){
+  if (rotulo && proy){
     const pr = puntos(proy);
     debe(parseFloat(rotulo.getAttribute('y')) > pr[pr.length - 1][1] + 15, 'la cifra va debajo de la azul, sin tocarla');
   }

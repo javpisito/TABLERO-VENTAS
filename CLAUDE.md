@@ -593,7 +593,7 @@ facturado de lo proyectado y entender por qué:
   hoy al final, plano con el total agendado. A medida que pasan los días la verde se
   le acerca, y las dos se encuentran el último día.
 - La cifra "faltan por pasar" va a la derecha de hoy, debajo de la azul plana, si
-  cabe completa; si no, a la izquierda, entre las dos curvas.
+  cabe completa; si no, alineada al final del mes, también debajo de la azul.
 
 Así quedó el 24 de noviembre de 2026, después de probar con el analista facturado
 punteado hacia adelante, una raya azul plana punteada y una recta de lo facturado hoy

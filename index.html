@@ -2008,10 +2008,11 @@ function pintarGrafico(d, opc){
     // A la derecha de la raya, debajo de la azul plana: de hoy en adelante ese lado
     // está libre porque la verde se corta en hoy. Va a la derecha solo si cabe
     // completa (el largo se estima por letras: Martian Mono a 15px, unos 9,2px cada
-    // una); si no, a la izquierda, a media altura entre las dos curvas.
+    // una); si no, alineada al final del mes, también debajo de la azul plana. A la
+    // izquierda, entre las dos curvas, quedaba montada sobre la azul que sube.
     const texto = 'faltan por pasar ' + enMillones(brecha);
     const derecha = x(diaHoy) + 12 + texto.length * 9.2 <= G.ancho - G.der;
-    partes.push(`<text x="${x(diaHoy) + (derecha ? 12 : -12)}" y="${derecha ? yArriba + 26 : (yArriba + yAbajo) / 2 + 5}"
+    partes.push(`<text x="${derecha ? x(diaHoy) + 12 : G.ancho - G.der}" y="${yArriba + 26}"
       class="rotuloBrecha" text-anchor="${derecha ? 'start' : 'end'}">${texto}</text>`);
   }
 
