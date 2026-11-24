@@ -22,7 +22,7 @@
  * el que dejó el disparador en la última corrida: si no coinciden es que el código
  * está guardado pero no publicado, que es la forma más común de perder una tarde.
  */
-var VERSION = '2026-11-20.1';
+var VERSION = '2026-11-24.1';
 
 var ZONA = 'America/Bogota';
 
@@ -94,6 +94,11 @@ function recolectarAhora(){
   var porAgregar = [];
   var avisos = [];
   var vistos = {};   // cliente -> { id: true }. Solo de las hojas que sí abrieron.
+  // El primer día en que se vio cada venta, guardado fuera del Registro para que
+  // sobreviva a que lo vacíen. Ver "Memoria del día en que apareció cada venta".
+  var propsScript = PropertiesService.getScriptProperties();
+  var memoria = { mapa: leerVistos(propsScript.getProperties()), cambio: false };
+  var ahora = new Date();
 
   fuentes.forEach(function(f){
     try{
@@ -144,14 +149,19 @@ function recolectarAhora(){
         }
         vistos[f.cliente][id] = true;
 
+        // Una venta que vuelve a entrar porque vaciaron el Registro se queda con el
+        // día en que se vio por primera vez, no con el de hoy.
+        var recordado = memoria.mapa[id];
+        if (!recordado){ memoria.mapa[id] = aMinutos(ahora); memoria.cambio = true; }
         var registroFila = [
           id, f.cliente, dia, vendedora, monto,
           normalizarEstado(fila[ORIGEN.estado - 1]),
-          String(fila[ORIGEN.producto - 1] || ''), new Date()
+          String(fila[ORIGEN.producto - 1] || ''),
+          recordado ? new Date(recordado * 60000) : ahora
         ];
 
         if (!yaEstan[id]) porAgregar.push(registroFila);
-        else actualizarSiCambio(registro, yaEstan[id], registroFila);
+        else actualizarSiCambio(registro, yaEstan[id], registroFila, memoria);
       });
 
       if (hayIdsNuevos){
@@ -172,6 +182,8 @@ function recolectarAhora(){
     registro.getRange(registro.getLastRow() + 1, 1, porAgregar.length, ANCHO_REG)
             .setValues(porAgregar);
   }
+
+  if (memoria.cambio) guardarVistos(propsScript, memoria.mapa);
 
   avisarDesaparecidas(registro, vistos).forEach(function(a){ avisos.push(a); });
 
@@ -233,8 +245,17 @@ function indiceDelRegistro(registro){
 }
 
 /** Solo escribe si algo cambió: evita reescribir 500 filas cada minuto. */
-function actualizarSiCambio(registro, fila, nueva){
+function actualizarSiCambio(registro, fila, nueva, memoria){
   var actual = registro.getRange(fila, 1, 1, ANCHO_REG).getValues()[0];
+
+  // visto_en: gana la fecha más temprana entre el Registro y la memoria.
+  if (memoria){
+    var id = String(actual[REG.id - 1]);
+    var decision = decidirVisto(aMinutos(actual[REG.visto - 1]), memoria.mapa[id] || 0);
+    if (decision.recordar){ memoria.mapa[id] = decision.recordar; memoria.cambio = true; }
+    if (decision.escribir) registro.getRange(fila, REG.visto).setValue(new Date(decision.escribir * 60000));
+  }
+
   var cambio = String(actual[REG.estado - 1]) !== String(nueva[REG.estado - 1])
             || Number(actual[REG.monto - 1]) !== Number(nueva[REG.monto - 1])
             || String(actual[REG.fecha - 1]) !== String(nueva[REG.fecha - 1])
@@ -676,6 +697,83 @@ function diaVistoDe(visto, mesActual){
   var d = (visto instanceof Date) ? visto : new Date(visto);
   if (isNaN(d.getTime())) return 0;
   return mesClave(d, ZONA) === mesActual ? Number(diaClave(d, ZONA).slice(-2)) : 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MEMORIA DEL DÍA EN QUE APARECIÓ CADA VENTA
+   ══════════════════════════════════════════════════════════════
+   visto_en vive en el Registro, y el Registro se ha vaciado varias veces
+   (siete solo en noviembre de 2026). Cada vez, el recolector lo volvía a
+   llenar con la fecha de ese momento y la línea de proyectado de la
+   gráfica quedaba plana hasta ese día y con un salto después.
+
+   Ahora el primer día en que se vio cada venta también se guarda en las
+   Propiedades del script, que nadie vacía a mano. Si el Registro tiene una
+   fecha más tardía que la recordada, se corrige; si tiene una más temprana,
+   se aprende. Se guarda en minutos desde 1970, que es corto, y repartido
+   por cliente y por mes (VISTOS_DAY_202611), porque cada propiedad admite
+   solo 9 KB. Lo de hace más de MESES_VISTOS meses se suelta.
+   ══════════════════════════════════════════════════════════════ */
+var PREFIJO_VISTOS = 'VISTOS_';
+var MESES_VISTOS = 4;
+
+/** Una fecha (o lo que traiga la celda) en minutos desde 1970; 0 si no es fecha. */
+function aMinutos(v){
+  if (!v) return 0;
+  var t = ((v instanceof Date) ? v : new Date(v)).getTime();
+  return isNaN(t) ? 0 : Math.floor(t / 60000);
+}
+
+/**
+ * Qué hacer con una venta, comparando la fecha del Registro con la recordada.
+ * Gana siempre la más temprana: vaciar el Registro solo puede correr la fecha
+ * hacia adelante, nunca hacia atrás.
+ *   recordar: la fecha que hay que guardar en la memoria (0 = nada)
+ *   escribir: la fecha que hay que poner en el Registro (0 = nada)
+ */
+function decidirVisto(enRegistro, recordado){
+  if (enRegistro && (!recordado || enRegistro < recordado)) return { recordar: enRegistro, escribir: 0 };
+  if (recordado && (!enRegistro || recordado < enRegistro)) return { recordar: 0, escribir: recordado };
+  return { recordar: 0, escribir: 0 };
+}
+
+/** Junta todas las partes de la memoria: { id: minutos }. Ignora lo que no se pueda leer. */
+function leerVistos(propiedades){
+  var mapa = {};
+  Object.keys(propiedades || {}).forEach(function(clave){
+    if (clave.indexOf(PREFIJO_VISTOS) !== 0) return;
+    var parte;
+    try{ parte = JSON.parse(propiedades[clave]); } catch (err){ return; }
+    Object.keys(parte || {}).forEach(function(id){
+      var m = Number(parte[id]) || 0;
+      if (m && (!mapa[id] || m < mapa[id])) mapa[id] = m;
+    });
+  });
+  return mapa;
+}
+
+/** Reparte la memoria en propiedades por cliente y por mes, sin lo de hace más de MESES_VISTOS meses. */
+function partirVistos(mapa, ahora){
+  var limite = aMinutos(ahora) - MESES_VISTOS * 31 * 24 * 60;
+  var partes = {};
+  Object.keys(mapa).forEach(function(id){
+    var m = mapa[id];
+    if (!m || m < limite) return;
+    var clave = PREFIJO_VISTOS + prefijoDe(id) + '_' + Utilities.formatDate(new Date(m * 60000), ZONA, 'yyyyMM');
+    partes[clave] = partes[clave] || {};
+    partes[clave][id] = m;
+  });
+  Object.keys(partes).forEach(function(clave){ partes[clave] = JSON.stringify(partes[clave]); });
+  return partes;
+}
+
+/** Guarda la memoria y borra las partes que ya no tienen nada (las de meses soltados). */
+function guardarVistos(props, mapa){
+  var partes = partirVistos(mapa, new Date());
+  props.setProperties(partes);
+  Object.keys(props.getProperties()).forEach(function(clave){
+    if (clave.indexOf(PREFIJO_VISTOS) === 0 && !(clave in partes)) props.deleteProperty(clave);
+  });
 }
 
 function inicioDelMes(){

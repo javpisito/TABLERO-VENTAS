@@ -403,6 +403,21 @@ para el "hoy" y el mes en curso.
 Ideal igual es que las seis hojas y el proyecto de Apps Script estén en
 `(GMT-05:00) Bogotá`. `probarMontaje()` imprime la zona de cada una y marca las que no.
 
+**El día en que apareció cada venta se recuerda fuera del Registro.** `visto_en` es lo que
+alimenta la línea de proyectado de la gráfica, y en noviembre de 2026 el Registro se vació
+siete veces (el 5, 7, 11, 13, 19, 20 y 24) para limpiar avisos de ventas borradas. Cada
+vez el recolector lo volvía a llenar con la fecha de ese momento, y la línea quedaba
+pegada a la de facturado y con un salto el día del vaciado. El 20 se recuperaron las
+fechas a mano desde seis versiones del historial de la hoja, y el 24 se perdieron otra vez.
+
+Desde el 24 de noviembre de 2026 el primer día en que se vio cada venta también vive en
+las Propiedades del script (`VISTOS_<prefijo>_<yyyyMM>`, en minutos desde 1970, porque
+cada propiedad admite 9 KB). En cada pasada gana la fecha más temprana entre el Registro y
+la memoria: si el Registro trae una más tardía, se corrige; si trae una más temprana, se
+aprende. Lo de hace más de cuatro meses se suelta. Así vaciar el Registro ya no borra
+nada, pero sigue sin ser la forma de limpiar avisos: lo correcto es borrar solo la fila de
+la venta que desapareció.
+
 **El estado se normaliza al leerlo.** Un `facturada` en minúscula escrito a mano sumaba
 en la vendedora pero no en el cliente, y los totales dejaban de cuadrar.
 
